@@ -99,6 +99,22 @@ const dateStr = new Date().toLocaleDateString('en-US', {
   }
   #t-output .t-ls-entry { display: block; }
 
+  .whoami-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    white-space: normal;
+    flex-wrap: wrap;
+  }
+  .whoami-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--mauve);
+    flex-shrink: 0;
+  }
+
   .t-pfx-short { display: none; }
 
   @media (max-width: 640px) {
@@ -196,7 +212,10 @@ const dateStr = new Date().toLocaleDateString('en-US', {
         return;
 
       case 'whoami':
-        line(`<span class="mauve">devin</span> — embedded sw engineer / musician / aspiring gorilla`);
+        line(`<div class="whoami-row">` +
+          `<img src="/devin.jpg" class="whoami-avatar" alt="devin" />` +
+          `<span><span class="mauve">devin</span> — embedded sw engineer / musician / aspiring gorilla</span>` +
+          `</div>`);
         break;
 
       case 'help':

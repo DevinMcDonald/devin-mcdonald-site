@@ -97,6 +97,22 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   }
   :global(.ls-comment) { color: var(--overlay0); }
 
+  :global(.whoami-row) {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    white-space: normal;
+    flex-wrap: wrap;
+  }
+  :global(.whoami-avatar) {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--mauve);
+    flex-shrink: 0;
+  }
+
   /* prompt line */
   #prompt-line {
     display: flex;
@@ -237,6 +253,13 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
 
   window.addEventListener('resize', fitAsciiTitle);
 
+  function buildWhoamiHtml() {
+    return `<span class="whoami-row">` +
+      `<img src="/devin.jpg" class="whoami-avatar" alt="devin" />` +
+      `<span><span class="mauve">devin</span> — embedded sw engineer / musician / aspiring gorilla</span>` +
+      `</span>`;
+  }
+
   function buildLsLine(section) {
     return `<span class="ls-row">` +
       `<a class="dir-link" href="${section.path}">${section.name}/</a>` +
@@ -321,7 +344,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     }
     cmdLine.innerHTML = buildPromptHtml(cmd);
     await sleep(animationDone ? 0 : 120);
-    appendLine('<span class="mauve">devin</span> — embedded sw engineer / musician / aspiring gorilla');
+    appendLine(buildWhoamiHtml());
     appendLine();
     await sleep(animationDone ? 0 : 200);
   }
@@ -364,7 +387,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     const verbose = window.innerWidth > 640;
     printTitle();
     appendLine(buildPromptHtml('whoami'));
-    appendLine('<span class="mauve">devin</span> — embedded sw engineer / musician / aspiring gorilla');
+    appendLine(buildWhoamiHtml());
     appendLine();
     appendLine(buildPromptHtml(verbose ? 'ls -al' : 'ls'));
     if (verbose) {
@@ -444,7 +467,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
         return;
 
       case 'whoami':
-        appendLine('<span class="mauve">devin</span> — embedded sw engineer / musician / aspiring gorilla');
+        appendLine(buildWhoamiHtml());
         break;
 
       case 'help':
