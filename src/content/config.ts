@@ -15,16 +15,18 @@ import { remarkFigletHeadings } from '../plugins/remark-figlet-headings.mjs';
 
 const VAULT_PATH = process.env.VAULT_PATH ?? '/Users/devinmcdonald/Obsidian Vault/personal';
 
-const processor = unified()
-  .use(remarkParse)
-  .use(remarkGfm)
-  .use(remarkStripDataview)
-  .use(remarkYouTubeEmbeds)
-  .use(remarkWikiLinks)
-  .use(remarkFigletHeadings)
-  .use(remarkRehype, { allowDangerousHtml: true })
-  .use(rehypeRaw)
-  .use(rehypeStringify);
+function makeProcessor(validIds: Set<string>) {
+  return unified()
+    .use(remarkParse)
+    .use(remarkGfm)
+    .use(remarkStripDataview)
+    .use(remarkYouTubeEmbeds)
+    .use(remarkWikiLinks, { validIds })
+    .use(remarkFigletHeadings)
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeRaw)
+    .use(rehypeStringify);
+}
 
 function toId(filename: string): string {
   return filename
@@ -49,18 +51,23 @@ function obsidianFitnessLoader() {
         return;
       }
 
-      let count = 0;
+      // First pass: collect valid IDs so wiki links can be validated
+      const fitnessFiles: { file: string; id: string; data: any; content: string }[] = [];
       for (const file of files) {
         if (!file.endsWith('.md')) continue;
-
         const raw = await readFile(join(VAULT_PATH, file), 'utf-8');
         const { data, content } = matter(raw);
-
         if (data.section !== 'fitness') continue;
+        fitnessFiles.push({ file, id: toId(file), data, content });
+      }
 
-        const id = toId(file);
+      const validIds = new Set(fitnessFiles.map(f => f.id));
+      const processor = makeProcessor(validIds);
+
+      // Second pass: render with link validation
+      let count = 0;
+      for (const { file, id, data, content } of fitnessFiles) {
         const result = await processor.process(content);
-
         store.set({
           id,
           data: {

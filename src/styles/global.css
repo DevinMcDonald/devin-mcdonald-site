@@ -39,7 +39,7 @@ html, body {
   background-color: var(--base);
   color: var(--text);
   font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
-  font-size: 15px;
+  font-size: 18px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }

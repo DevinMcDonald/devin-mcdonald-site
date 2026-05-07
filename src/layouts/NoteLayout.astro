@@ -31,6 +31,12 @@ const promptPath = `~/${section}/${title.toLowerCase().replace(/\s+/g, '-')}`;
 <BaseLayout title={`${title} — devin-mcdonald.com`}>
   <div class="note-page">
 
+    <nav class="note-nav">
+      <a href={sectionPath} class="green">cd ..</a>
+      <span class="dim"> &nbsp;·&nbsp; </span>
+      <a href="/" class="green">cd ~</a>
+    </nav>
+
     <header class="note-header">
       <span class="dim">devin@devin-mcdonald.com</span><span class="mauve">:</span><span class="blue">~/{section}</span><span class="mauve">$</span>
       <span class="dim"> cat {title.toLowerCase().replace(/\s+/g, '-')}.md</span>
@@ -55,6 +61,11 @@ const promptPath = `~/${section}/${title.toLowerCase().replace(/\s+/g, '-')}`;
     max-width: 90ch;
     margin: 0 auto;
     padding: 2rem;
+  }
+
+  .note-nav {
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
   }
 
   .note-header {

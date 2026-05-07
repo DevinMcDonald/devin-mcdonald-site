@@ -67,6 +67,16 @@ const dateStr = new Date().toLocaleDateString('en-US', {
     cursor: text;
   }
 
+  .cursor {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.15em;
+    background-color: var(--text);
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+    flex-shrink: 0;
+  }
+
   /* output line color classes */
   #t-output .dim    { color: var(--overlay0); }
   #t-output .green  { color: var(--green); }

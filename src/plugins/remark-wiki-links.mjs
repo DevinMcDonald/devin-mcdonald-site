@@ -13,7 +13,7 @@ export function toSlug(name) {
 }
 
 export function remarkWikiLinks(options = {}) {
-  const { basePath = '/fitness' } = options;
+  const { basePath = '/fitness', validIds = null } = options;
 
   return (tree) => {
     visit(tree, 'text', (node, index, parent) => {
@@ -31,13 +31,13 @@ export function remarkWikiLinks(options = {}) {
 
         const target = match[1].trim();
         const display = match[2]?.trim() ?? target;
+        const slug = toSlug(target);
 
-        parts.push({
-          type: 'link',
-          url: `${basePath}/${toSlug(target)}`,
-          title: null,
-          children: [{ type: 'text', value: display }],
-        });
+        const known = validIds === null || validIds.has(slug);
+        parts.push(known
+          ? { type: 'link', url: `${basePath}/${slug}`, title: null, children: [{ type: 'text', value: display }] }
+          : { type: 'text', value: display }
+        );
 
         last = match.index + match[0].length;
       }
