@@ -15,7 +15,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   <main id="terminal-container">
     <div id="output" aria-live="polite"></div>
     <div id="prompt-line" class="hidden">
-      <span class="prompt-prefix">devin@devin-mcdonald.com:~$&nbsp;</span>
+      <span class="prompt-prefix"><span class="host">devin@devin-mcdonald.com:</span>~$&nbsp;</span>
       <span id="typed-cmd"></span>
       <span id="cursor" class="cursor"></span>
       <input
@@ -49,10 +49,14 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     cursor: text;
   }
 
+  @media (max-width: 640px) {
+    #terminal-container { padding: 1rem; }
+  }
+
   #output {
     flex: 1;
     white-space: pre;
-    overflow-x: auto;
+    overflow-x: clip;
   }
 
   /* individual output lines */
@@ -88,8 +92,13 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     display: flex !important;
     align-items: baseline;
   }
-  :global(.ls-left)   { min-width: 56ch; }
+  :global(.ls-left)    { min-width: 56ch; }
   :global(.ls-comment) { color: var(--overlay0); }
+
+  @media (max-width: 640px) {
+    :global(.ls-left)    { min-width: 0; }
+    :global(.ls-comment) { display: none; }
+  }
 
   /* prompt line */
   #prompt-line {
@@ -108,6 +117,10 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     color: var(--green);
     flex-shrink: 0;
     white-space: pre;
+  }
+
+  @media (max-width: 640px) {
+    .host { display: none; }
   }
 
   #typed-cmd {
@@ -195,8 +208,22 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   }
 
   function buildPromptHtml(cmd = '') {
-    return `<span class="green">devin@devin-mcdonald.com:~$</span>&nbsp;${cmd}`;
+    return `<span class="green"><span class="host">devin@devin-mcdonald.com:</span>~$</span>&nbsp;${cmd}`;
   }
+
+  function fitAsciiTitle() {
+    const w = document.getElementById('terminal-container').clientWidth;
+    document.querySelectorAll('.ascii-art').forEach(el => {
+      el.style.fontSize = '';
+      let size = parseFloat(getComputedStyle(el).fontSize);
+      while (el.scrollWidth > w && size > 4) {
+        size -= 0.25;
+        el.style.fontSize = size + 'px';
+      }
+    });
+  }
+
+  window.addEventListener('resize', fitAsciiTitle);
 
   function buildLsLine(section) {
     const left =
@@ -249,6 +276,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   function printTitle() {
     for (const line of ASCII_TITLE) appendLine(line, 'ascii-art');
     appendLine();
+    fitAsciiTitle();
   }
 
   async function runAscii() {
@@ -257,6 +285,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
       if (!animationDone) await sleep(65);
     }
     appendLine();
+    fitAsciiTitle();
     await sleep(animationDone ? 0 : 220);
   }
 

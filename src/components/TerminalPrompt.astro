@@ -20,7 +20,7 @@ const dateStr = new Date().toLocaleDateString('en-US', {
 <div class="t-shell" id="t-shell">
   <div id="t-output"></div>
   <div class="t-prompt-row">
-    <span class="t-prefix">devin@devin-mcdonald.com:{promptPath}$&nbsp;</span>
+    <span class="t-prefix"><span class="t-host">devin@devin-mcdonald.com:</span>{promptPath}$&nbsp;</span>
     <span id="t-typed"></span>
     <span id="t-cursor" class="cursor"></span>
     <input
@@ -97,6 +97,12 @@ const dateStr = new Date().toLocaleDateString('en-US', {
   #t-output .t-ls-entry { display: flex; }
   #t-output .t-ls-left  { min-width: 56ch; }
   #t-output .t-ls-cmt   { color: var(--overlay0); }
+
+  @media (max-width: 640px) {
+    .t-host              { display: none; }
+    #t-output .t-ls-left { min-width: 0; }
+    #t-output .t-ls-cmt  { display: none; }
+  }
 </style>
 
 <script define:vars={{ promptPath, parentHref, notes, dateStr }}>
@@ -122,7 +128,7 @@ const dateStr = new Date().toLocaleDateString('en-US', {
   }
 
   function prompt(cmd) {
-    line(`<span class="green">devin@devin-mcdonald.com:${promptPath}$</span> ${esc(cmd)}`);
+    line(`<span class="green"><span class="t-host">devin@devin-mcdonald.com:</span>${promptPath}$</span> ${esc(cmd)}`);
   }
 
   function lsRow(note) {

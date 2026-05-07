@@ -63,6 +63,10 @@ const promptPath = `~/${section}/${title.toLowerCase().replace(/\s+/g, '-')}`;
     padding: 2rem;
   }
 
+  @media (max-width: 640px) {
+    .note-page { padding: 1rem; }
+  }
+
   .note-nav {
     font-size: 0.85rem;
     margin-bottom: 0.75rem;
@@ -166,6 +170,8 @@ const promptPath = `~/${section}/${title.toLowerCase().replace(/\s+/g, '-')}`;
     border-collapse: collapse;
     width: 100%;
     margin: 1em 0;
+    display: block;
+    overflow-x: auto;
   }
 
   :global(.note-content th),
