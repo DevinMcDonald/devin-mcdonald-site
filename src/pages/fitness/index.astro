@@ -3,11 +3,11 @@ import NoteLayout from '../../layouts/NoteLayout.astro';
 import { getCollection } from 'astro:content';
 
 const notes = await getCollection('fitness');
-const moc   = notes.find(n => n.id === 'exercise-moc');
+const moc   = notes.find(n => n.id === 'fitness-overview');
 const html  = (moc as any)?.rendered?.html ?? '';
 
 const noteItems = notes
-  .filter(n => n.id !== 'exercise-moc')
+  .filter(n => n.id !== 'fitness-overview')
   .sort((a, b) => ((a.data.title as string) ?? a.id).localeCompare((b.data.title as string) ?? b.id))
   .map(n => ({
     id:    n.id,
@@ -17,7 +17,7 @@ const noteItems = notes
 ---
 
 {moc ? (
-  <NoteLayout title="Exercise MOC" section="fitness" sectionPath="/" notes={noteItems}>
+  <NoteLayout title="Fitness Overview" section="fitness" sectionPath="/" notes={noteItems}>
     <div set:html={html} />
   </NoteLayout>
 ) : (
