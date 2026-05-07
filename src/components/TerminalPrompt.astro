@@ -1,0 +1,225 @@
+---
+interface NoteItem {
+  id: string;
+  title: string;
+  href: string;
+}
+
+interface Props {
+  promptPath: string;   // display path e.g. "~/fitness/push-split"
+  parentHref: string;   // where "cd .." navigates
+  notes?: NoteItem[];   // available for "ls" and "cd <name>"
+}
+
+const { promptPath, parentHref, notes = [] } = Astro.props;
+const dateStr = new Date().toLocaleDateString('en-US', {
+  month: 'short', day: 'numeric', year: 'numeric',
+});
+---
+
+<div class="t-shell" id="t-shell">
+  <div id="t-output"></div>
+  <div class="t-prompt-row">
+    <span class="t-prefix">devin@devin-mcdonald.com:{promptPath}$&nbsp;</span>
+    <span id="t-typed"></span>
+    <span id="t-cursor" class="cursor"></span>
+    <input
+      id="t-input"
+      type="text"
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="off"
+      spellcheck="false"
+      aria-label="terminal input"
+    />
+  </div>
+</div>
+
+<style is:global>
+  .t-shell { margin-top: 0.5rem; }
+
+  #t-output > div { min-height: 1.4em; line-height: 1.6; white-space: pre; }
+
+  .t-prompt-row {
+    display: flex;
+    align-items: center;
+    position: relative;
+    margin-top: 0.1em;
+  }
+
+  .t-prefix { color: var(--green); white-space: pre; flex-shrink: 0; }
+
+  #t-typed  { color: var(--text); white-space: pre; }
+
+  #t-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: transparent;
+    caret-color: transparent;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: text;
+  }
+
+  /* output line color classes */
+  #t-output .dim    { color: var(--overlay0); }
+  #t-output .green  { color: var(--green); }
+  #t-output .blue   { color: var(--blue); }
+  #t-output .red    { color: var(--red); }
+  #t-output .mauve  { color: var(--mauve); }
+  #t-output .yellow { color: var(--yellow); }
+  #t-output .perms  { color: var(--overlay1); }
+  #t-output .t-dir  {
+    color: var(--blue);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  #t-output .t-dir:hover {
+    color: var(--lavender);
+    text-decoration: underline;
+  }
+  #t-output .t-ls-entry { display: flex; }
+  #t-output .t-ls-left  { min-width: 56ch; }
+  #t-output .t-ls-cmt   { color: var(--overlay0); }
+</style>
+
+<script define:vars={{ promptPath, parentHref, notes, dateStr }}>
+  const output   = document.getElementById('t-output');
+  const input    = document.getElementById('t-input');
+  const typedEl  = document.getElementById('t-typed');
+  const cursorEl = document.getElementById('t-cursor');
+  const shell    = document.getElementById('t-shell');
+
+  const cmdHistory = [];
+  let histIdx = -1;
+
+  const SECTIONS = { fitness: '/fitness', music: '/music', embedded: '/embedded' };
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function line(html = '') {
+    const d = document.createElement('div');
+    d.innerHTML = html;
+    output.appendChild(d);
+  }
+
+  function prompt(cmd) {
+    line(`<span class="green">devin@devin-mcdonald.com:${promptPath}$</span> ${esc(cmd)}`);
+  }
+
+  function lsRow(note) {
+    return `<div class="t-ls-entry">` +
+      `<span class="t-ls-left"><span class="perms">dr--r--r--</span>  ` +
+      `<span class="dim">devin  users  4096  ${dateStr}  </span>` +
+      `<a class="t-dir" href="${note.href}">${esc(note.title)}/</a></span>` +
+      `</div>`;
+  }
+
+  function handle(raw) {
+    const cmd = raw.trim();
+    prompt(cmd);
+    if (!cmd) return;
+
+    const [verb, ...rest] = cmd.split(/\s+/);
+    const arg = rest.join(' ').replace(/\/$/, '');
+
+    switch (verb.toLowerCase()) {
+
+      case 'ls':
+      case 'ls -al':
+      case 'ls -la': {
+        line(`<span class="dim">total ${notes.length}</span>`);
+        line(`<span class="perms">drwxr-xr-x</span>  <span class="dim">devin  users  4096  ${dateStr}  </span><a class="t-dir" href="${parentHref}">../</a>`);
+        for (const n of notes) line(lsRow(n));
+        break;
+      }
+
+      case 'cd': {
+        if (!arg || arg === '~') { window.location.href = '/'; return; }
+        if (arg === '..') { window.location.href = parentHref; return; }
+        const note = notes.find(n => n.id === arg || n.href.endsWith('/' + arg));
+        if (note) { window.location.href = note.href; return; }
+        if (SECTIONS[arg]) { window.location.href = SECTIONS[arg]; return; }
+        line(`<span class="red">bash: cd: ${esc(arg)}: No such file or directory</span>`);
+        break;
+      }
+
+      case 'clear':
+        output.innerHTML = '';
+        return;
+
+      case 'reset':
+        window.location.reload();
+        return;
+
+      case 'whoami':
+        line(`<span class="mauve">devin</span> — embedded sw engineer / musician / lifter`);
+        break;
+
+      case 'help':
+        line(`<span class="yellow">available commands:</span>`);
+        line(`  <span class="blue">ls</span>           list notes`);
+        line(`  <span class="blue">cd &lt;name&gt;</span>    navigate to a note or section`);
+        line(`  <span class="blue">cd ..</span>         go back`);
+        line(`  <span class="blue">cd ~</span>          go home`);
+        line(`  <span class="blue">whoami</span>        about me`);
+        line(`  <span class="blue">clear</span>         clear output`);
+        line(`  <span class="blue">reset</span>         reload page`);
+        break;
+
+      default:
+        line(`<span class="red">bash: ${esc(verb)}: command not found</span>`);
+        line(`<span class="dim">type <span class="blue">help</span> for available commands</span>`);
+    }
+
+    line('');
+    output.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ── input wiring ──────────────────────────────────────────
+  input.addEventListener('input', () => {
+    typedEl.textContent = input.value;
+    cursorEl.style.display = input.value.length ? 'none' : '';
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const val = input.value;
+      input.value = '';
+      typedEl.textContent = '';
+      cursorEl.style.display = '';
+      if (val.trim()) { cmdHistory.unshift(val); histIdx = -1; }
+      handle(val);
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (histIdx < cmdHistory.length - 1) {
+        histIdx++;
+        input.value = cmdHistory[histIdx];
+        typedEl.textContent = input.value;
+        cursorEl.style.display = 'none';
+      }
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (histIdx > 0) { histIdx--; input.value = cmdHistory[histIdx]; }
+      else { histIdx = -1; input.value = ''; }
+      typedEl.textContent = input.value;
+      cursorEl.style.display = input.value.length ? 'none' : '';
+    }
+  });
+
+  shell.addEventListener('click', () => input.focus());
+  document.addEventListener('keydown', e => {
+    if (document.activeElement === input) return;
+    if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) input.focus();
+  });
+</script>

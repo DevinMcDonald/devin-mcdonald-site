@@ -1,0 +1,28 @@
+---
+import NoteLayout from '../../layouts/NoteLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const notes = await getCollection('fitness');
+  return notes.map(note => ({
+    params: { slug: note.id },
+    props:  { note, allNotes: notes },
+  }));
+}
+
+const { note, allNotes } = Astro.props;
+const title = (note.data.title as string | undefined) ?? note.id;
+const html  = (note as any).rendered?.html ?? '';
+
+const noteItems = allNotes
+  .filter((n: any) => n.id !== 'exercise-moc')
+  .map((n: any) => ({
+    id:    n.id,
+    title: (n.data.title as string | undefined) ?? n.id,
+    href:  `/fitness/${n.id}`,
+  }));
+---
+
+<NoteLayout title={title} section="fitness" sectionPath="/fitness" notes={noteItems}>
+  <div set:html={html} />
+</NoteLayout>

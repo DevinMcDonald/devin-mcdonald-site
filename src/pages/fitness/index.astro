@@ -1,0 +1,30 @@
+---
+import NoteLayout from '../../layouts/NoteLayout.astro';
+import { getCollection } from 'astro:content';
+
+const notes = await getCollection('fitness');
+const moc   = notes.find(n => n.id === 'exercise-moc');
+const html  = (moc as any)?.rendered?.html ?? '';
+
+const noteItems = notes
+  .filter(n => n.id !== 'exercise-moc')
+  .sort((a, b) => ((a.data.title as string) ?? a.id).localeCompare((b.data.title as string) ?? b.id))
+  .map(n => ({
+    id:    n.id,
+    title: (n.data.title as string | undefined) ?? n.id,
+    href:  `/fitness/${n.id}`,
+  }));
+---
+
+{moc ? (
+  <NoteLayout title="Exercise MOC" section="fitness" sectionPath="/" notes={noteItems}>
+    <div set:html={html} />
+  </NoteLayout>
+) : (
+  <NoteLayout title="Fitness" section="fitness" sectionPath="/" notes={noteItems}>
+    {noteItems.length === 0
+      ? <p style="color:var(--overlay0)"># no notes yet — add section: fitness to vault notes</p>
+      : noteItems.map(n => <p><a href={n.href} style="color:var(--blue)">{n.title}/</a></p>)
+    }
+  </NoteLayout>
+)}

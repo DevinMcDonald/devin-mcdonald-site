@@ -1,0 +1,400 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const SECTIONS = [
+  { name: 'music',    path: '/music',    desc: 'music projects & notes' },
+  { name: 'embedded', path: '/embedded', desc: 'embedded systems & SW dev' },
+  { name: 'fitness',  path: '/fitness',  desc: 'training logs' },
+];
+
+const NOW = new Date();
+const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+---
+
+<BaseLayout>
+  <main id="terminal-container">
+    <div id="output" aria-live="polite"></div>
+    <div id="prompt-line" class="hidden">
+      <span class="prompt-prefix">devin@devin-mcdonald.com:~$&nbsp;</span>
+      <span id="typed-cmd"></span>
+      <span id="cursor" class="cursor"></span>
+      <input
+        id="cmd-input"
+        type="text"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        aria-label="terminal input"
+      />
+    </div>
+
+    <noscript>
+      <div class="noscript-nav">
+        <p>devin@devin-mcdonald.com:~$ ls -al</p>
+        {SECTIONS.map(s => (
+          <a href={s.path}>dr--r--r-- &nbsp;{s.name}/</a>
+        ))}
+      </div>
+    </noscript>
+  </main>
+</BaseLayout>
+
+<style>
+  #terminal-container {
+    min-height: 100vh;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    cursor: text;
+  }
+
+  #output {
+    flex: 1;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  /* individual output lines */
+  :global(.output-line) {
+    display: block;
+    min-height: 1.6em;
+  }
+
+  :global(.ascii-art) {
+    color: var(--mauve);
+    font-size: clamp(7px, 1.1vw, 13px);
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  :global(.dim)      { color: var(--overlay0); }
+  :global(.green)    { color: var(--green); }
+  :global(.blue)     { color: var(--blue); }
+  :global(.yellow)   { color: var(--yellow); }
+  :global(.mauve)    { color: var(--mauve); }
+  :global(.perms)    { color: var(--overlay1); }
+  :global(.dir-link) {
+    color: var(--blue);
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  :global(.dir-link:hover) {
+    color: var(--lavender);
+    text-decoration: underline;
+  }
+  :global(.ls-entry) {
+    display: flex !important;
+    align-items: baseline;
+  }
+  :global(.ls-left)   { min-width: 56ch; }
+  :global(.ls-comment) { color: var(--overlay0); }
+
+  /* prompt line */
+  #prompt-line {
+    display: flex;
+    align-items: center;
+    margin-top: 0.1em;
+    position: relative;
+  }
+
+  #prompt-line.hidden {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .prompt-prefix {
+    color: var(--green);
+    flex-shrink: 0;
+    white-space: pre;
+  }
+
+  #typed-cmd {
+    color: var(--text);
+    white-space: pre;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.15em;
+    background-color: var(--text);
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+    flex-shrink: 0;
+  }
+
+  /* hidden real input overlays the visible typed text */
+  #cmd-input {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: transparent;
+    caret-color: transparent;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: text;
+  }
+
+  /* noscript fallback */
+  .noscript-nav {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .noscript-nav a {
+    color: var(--blue);
+    font-family: inherit;
+  }
+</style>
+
+<script define:vars={{ SECTIONS, dateStr }}>
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  const ASCII_TITLE = [
+    '██████╗ ███████╗██╗   ██╗██╗███╗   ██╗  ███╗   ███╗ ██████╗██████╗  ██████╗ ███╗   ██╗ █████╗ ██╗     ██████╗ ',
+    '██╔══██╗██╔════╝██║   ██║██║████╗  ██║  ████╗ ████║██╔════╝██╔══██╗██╔═══██╗████╗  ██║██╔══██╗██║     ██╔══██╗',
+    '██║  ██║█████╗  ██║   ██║██║██╔██╗ ██║  ██╔████╔██║██║     ██║  ██║██║   ██║██╔██╗ ██║███████║██║     ██║  ██║',
+    '██║  ██║██╔══╝  ╚██╗ ██╔╝██║██║╚██╗██║  ██║╚██╔╝██║██║     ██║  ██║██║   ██║██║╚██╗██║██╔══██║██║     ██║  ██║',
+    '██████╔╝███████╗ ╚████╔╝ ██║██║ ╚████║  ██║ ╚═╝ ██║╚██████╗██████╔╝╚██████╔╝██║ ╚████║██║  ██║███████╗██████╔╝',
+    '╚═════╝ ╚══════╝  ╚═══╝  ╚═╝╚═╝  ╚═══╝  ╚═╝     ╚═╝ ╚═════╝╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝╚═════╝',
+  ];
+
+  const output      = document.getElementById('output');
+  const promptLine  = document.getElementById('prompt-line');
+  const typedCmd    = document.getElementById('typed-cmd');
+  const cursorEl    = document.getElementById('cursor');
+  const cmdInput    = document.getElementById('cmd-input');
+  const container   = document.getElementById('terminal-container');
+
+  let animationDone = false;
+
+  // ── helpers ──────────────────────────────────────────────────────────────
+
+  function appendLine(html = '', cls = '') {
+    const el = document.createElement('span');
+    el.classList.add('output-line');
+    if (cls) el.classList.add(cls);
+    el.innerHTML = html;
+    output.appendChild(el);
+    scrollToBottom();
+    return el;
+  }
+
+  function scrollToBottom() {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+  }
+
+  function buildPromptHtml(cmd = '') {
+    return `<span class="green">devin@devin-mcdonald.com:~$</span>&nbsp;${cmd}`;
+  }
+
+  function buildLsLine(section) {
+    const left =
+      `<span class="perms">dr--r--r--</span>  ` +
+      `<span class="dim">devin  users  4096  ${dateStr}  </span>` +
+      `<a class="dir-link" href="${section.path}">${section.name}/</a>`;
+    return `<span class="ls-left">${left}</span><span class="ls-comment"># ${section.desc}</span>`;
+  }
+
+  // ── skip handler ──────────────────────────────────────────────────────────
+
+  function skipToEnd() {
+    if (animationDone) return;
+    animationDone = true;
+  }
+
+  container.addEventListener('keydown', skipToEnd, { once: true });
+  container.addEventListener('click', skipToEnd, { once: true });
+
+  // ── boot sequence ────────────────────────────────────────────────────────
+
+  async function runBoot() {
+    const BAR_LEN = 28;
+    const bootEl = appendLine('', 'dim');
+    const label = 'Loading ';
+    let filled = 0;
+
+    const render = () => {
+      const bar = '█'.repeat(filled) + ' '.repeat(BAR_LEN - filled);
+      const pct = Math.round((filled / BAR_LEN) * 100);
+      bootEl.textContent = `${label}[${bar}] ${pct}%`;
+    };
+
+    render();
+
+    for (let i = 0; i <= BAR_LEN; i++) {
+      if (animationDone) { filled = BAR_LEN; render(); break; }
+      filled = i;
+      render();
+      await sleep(28);
+    }
+
+    bootEl.innerHTML = `<span class="dim">Loading [</span><span class="green">${'█'.repeat(BAR_LEN)}</span><span class="dim">] 100% — done.</span>`;
+    await sleep(animationDone ? 0 : 350);
+    output.innerHTML = '';
+  }
+
+  // ── ascii art ────────────────────────────────────────────────────────────
+
+  function printTitle() {
+    for (const line of ASCII_TITLE) appendLine(line, 'ascii-art');
+    appendLine();
+  }
+
+  async function runAscii() {
+    for (const line of ASCII_TITLE) {
+      appendLine(line, 'ascii-art');
+      if (!animationDone) await sleep(65);
+    }
+    appendLine();
+    await sleep(animationDone ? 0 : 220);
+  }
+
+  // ── ls sequence ──────────────────────────────────────────────────────────
+
+  async function runLs() {
+    const cmdLine = appendLine(buildPromptHtml(''));
+
+    // type "ls -al" character by character
+    const cmd = 'ls -al';
+    for (let i = 1; i <= cmd.length; i++) {
+      if (animationDone) break;
+      cmdLine.innerHTML = buildPromptHtml(cmd.slice(0, i));
+      await sleep(60);
+    }
+    cmdLine.innerHTML = buildPromptHtml(cmd);
+    await sleep(animationDone ? 0 : 120);
+
+    // ls header
+    appendLine('<span class="dim">total 3</span>');
+    appendLine(
+      `<span class="perms">drwxr-xr-x</span>  ` +
+      `<span class="dim">devin  users  4096  ${dateStr}  </span>` +
+      `<span class="blue">./</span>`
+    );
+    await sleep(animationDone ? 0 : 60);
+
+    for (const section of SECTIONS) {
+      appendLine(buildLsLine(section), 'ls-entry');
+      if (!animationDone) await sleep(70);
+    }
+
+    appendLine();
+    await sleep(animationDone ? 0 : 200);
+  }
+
+  // ── main animation ───────────────────────────────────────────────────────
+
+  async function runAnimation() {
+    await runBoot();
+    await runAscii();
+    await runLs();
+
+    animationDone = true;
+    promptLine.classList.remove('hidden');
+    cmdInput.focus();
+  }
+
+  // ── command handling ─────────────────────────────────────────────────────
+
+  function handleCommand(raw) {
+    const cmd = raw.trim();
+    appendLine(buildPromptHtml(cmd));
+
+    if (!cmd) return;
+
+    const [verb, ...args] = cmd.split(/\s+/);
+
+    switch (verb.toLowerCase()) {
+      case 'ls':
+        appendLine('<span class="dim">total 3</span>');
+        appendLine(
+          `<span class="perms">drwxr-xr-x</span>  ` +
+          `<span class="dim">devin  users  4096  ${dateStr}  </span>` +
+          `<span class="blue">./</span>`
+        );
+        for (const s of SECTIONS) appendLine(buildLsLine(s), 'ls-entry');
+        break;
+
+      case 'cd': {
+        const target = args[0]?.replace(/\/$/, '');
+        if (!target || target === '~' || target === '.') break;
+        const match = SECTIONS.find(
+          (s) => s.name === target || `/${s.name}` === target
+        );
+        if (match) {
+          window.location.href = match.path;
+        } else {
+          appendLine(`<span class="red">bash: cd: ${target}: No such file or directory</span>`);
+        }
+        break;
+      }
+
+      case 'clear':
+        output.innerHTML = '';
+        printTitle();
+        return;
+
+      case 'reset':
+        window.location.reload();
+        return;
+
+      case 'whoami':
+        appendLine('<span class="mauve">devin</span> — embedded sw engineer / musician / lifter');
+        break;
+
+      case 'help':
+        appendLine('<span class="yellow">available commands:</span>');
+        appendLine('  <span class="blue">ls</span>          list sections');
+        appendLine('  <span class="blue">cd &lt;name&gt;</span>   navigate to a section');
+        appendLine('  <span class="blue">whoami</span>      about me');
+        appendLine('  <span class="blue">clear</span>       clear terminal, keep title');
+        appendLine('  <span class="blue">reset</span>       replay boot animation');
+        break;
+
+      default:
+        appendLine(`<span class="red">bash: ${verb}: command not found</span>`);
+        appendLine(`<span class="dim">type <span class="blue">help</span> for available commands</span>`);
+    }
+
+    appendLine();
+    scrollToBottom();
+  }
+
+  // wire up input
+  cmdInput.addEventListener('input', () => {
+    typedCmd.textContent = cmdInput.value;
+  });
+
+  cmdInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const val = cmdInput.value;
+      cmdInput.value = '';
+      typedCmd.textContent = '';
+      handleCommand(val);
+    }
+  });
+
+  // clicking anywhere on the terminal focuses the input
+  container.addEventListener('click', () => {
+    if (animationDone) cmdInput.focus();
+  });
+
+  // hide cursor when typing, show when empty
+  cmdInput.addEventListener('input', () => {
+    cursorEl.style.display = cmdInput.value.length > 0 ? 'none' : 'inline-block';
+  });
+
+  // ── go ───────────────────────────────────────────────────────────────────
+  runAnimation();
+</script>
