@@ -323,9 +323,17 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   }
 
   async function runAscii() {
+    const CHUNK = 5; // chars per tick
+    const TICK  = 4; // ms per tick — 6 lines × ~22 ticks × 4ms ≈ 530ms total
+
     for (const line of ASCII_TITLE) {
-      appendLine(line, 'ascii-art');
-      if (!animationDone) await sleep(65);
+      const el = appendLine('', 'ascii-art');
+      for (let pos = CHUNK; pos < line.length; pos += CHUNK) {
+        if (animationDone) break;
+        el.textContent = line.slice(0, pos);
+        await sleep(TICK);
+      }
+      el.textContent = line;
     }
     appendLine();
     fitAsciiTitle();
