@@ -341,6 +341,26 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     await sleep(animationDone ? 0 : 200);
   }
 
+  // ── instant render (return visits within same session) ──────────────────
+
+  function renderInstant() {
+    const verbose = window.innerWidth > 640;
+    printTitle();
+    appendLine(buildPromptHtml(verbose ? 'ls -al' : 'ls'));
+    if (verbose) {
+      appendLine('<span class="dim">total 3</span>');
+      appendLine(`<span class="ls-al-entry"><span class="perms">drwxr-xr-x</span>  <span class="dim">you  users  4096  ${dateStr}  </span><span class="blue">./</span></span>`);
+      for (const s of SECTIONS) appendLine(buildLsLineVerbose(s));
+    } else {
+      appendLine('<span class="blue">./</span>');
+      for (const s of SECTIONS) appendLine(buildLsLine(s));
+    }
+    appendLine();
+    animationDone = true;
+    promptLine.classList.remove('hidden');
+    cmdInput.focus();
+  }
+
   // ── main animation ───────────────────────────────────────────────────────
 
   async function runAnimation() {
@@ -349,6 +369,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     await runLs();
 
     animationDone = true;
+    sessionStorage.setItem('booted', '1');
     promptLine.classList.remove('hidden');
     cmdInput.focus();
   }
@@ -397,6 +418,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
         return;
 
       case 'reset':
+        sessionStorage.removeItem('booted');
         window.location.reload();
         return;
 
@@ -433,6 +455,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
       const val = cmdInput.value;
       cmdInput.value = '';
       typedCmd.textContent = '';
+      cursorEl.style.display = 'inline-block';
       handleCommand(val);
     }
   });
@@ -448,5 +471,9 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   });
 
   // ── go ───────────────────────────────────────────────────────────────────
-  runAnimation();
+  if (sessionStorage.getItem('booted')) {
+    renderInstant();
+  } else {
+    runAnimation();
+  }
 </script>
