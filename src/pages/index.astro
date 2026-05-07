@@ -45,11 +45,13 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
 
 <style>
   #terminal-container {
-    min-height: 100vh;
+    height: 100vh;
+    height: 100dvh;
     padding: 2rem;
     display: flex;
     flex-direction: column;
     cursor: text;
+    overflow: hidden;
   }
 
   @media (max-width: 640px) {
@@ -60,7 +62,11 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     flex: 1;
     white-space: pre;
     overflow-x: clip;
+    overflow-y: auto;
+    scrollbar-width: none;
   }
+
+  #output::-webkit-scrollbar { display: none; }
 
   /* individual output lines */
   :global(.output-line) {
@@ -91,18 +97,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     color: var(--lavender);
     text-decoration: underline;
   }
-  :global(.ls-entry) {
-    display: flex !important;
-    align-items: baseline;
-  }
-  :global(.ls-left)    { min-width: 56ch; }
   :global(.ls-comment) { color: var(--overlay0); }
-
-  @media (max-width: 640px) {
-    :global(.ls-left)    { min-width: 0; }
-    :global(.ls-comment) { display: none; }
-    :global(.ls-meta)    { display: none; }
-  }
 
   /* prompt line */
   #prompt-line {
@@ -211,7 +206,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   }
 
   function scrollToBottom() {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+    output.scrollTop = output.scrollHeight;
   }
 
   function buildPromptHtml(cmd = '') {
@@ -236,11 +231,8 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   window.addEventListener('resize', fitAsciiTitle);
 
   function buildLsLine(section) {
-    const left =
-      `<span class="perms ls-meta">dr--r--r--</span>  ` +
-      `<span class="dim ls-meta">devin  users  4096  ${dateStr}  </span>` +
-      `<a class="dir-link" href="${section.path}">${section.name}/</a>`;
-    return `<span class="ls-left">${left}</span><span class="ls-comment"># ${section.desc}</span>`;
+    return `<a class="dir-link" href="${section.path}">${section.name}/</a>` +
+      `  <span class="ls-comment"># ${section.desc}</span>`;
   }
 
   // ── skip handler ──────────────────────────────────────────────────────────
@@ -314,13 +306,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     cmdLine.innerHTML = buildPromptHtml(cmd);
     await sleep(animationDone ? 0 : 120);
 
-    // ls header
-    appendLine('<span class="dim">total 3</span>');
-    appendLine(
-      `<span class="perms">drwxr-xr-x</span>  ` +
-      `<span class="dim">devin  users  4096  ${dateStr}  </span>` +
-      `<span class="blue">./</span>`
-    );
+    appendLine('<span class="blue">./</span>');
     await sleep(animationDone ? 0 : 60);
 
     for (const section of SECTIONS) {
@@ -356,13 +342,8 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
 
     switch (verb.toLowerCase()) {
       case 'ls':
-        appendLine('<span class="dim">total 3</span>');
-        appendLine(
-          `<span class="perms">drwxr-xr-x</span>  ` +
-          `<span class="dim">devin  users  4096  ${dateStr}  </span>` +
-          `<span class="blue">./</span>`
-        );
-        for (const s of SECTIONS) appendLine(buildLsLine(s), 'ls-entry');
+        appendLine('<span class="blue">./</span>');
+        for (const s of SECTIONS) appendLine(buildLsLine(s));
         break;
 
       case 'cd': {
