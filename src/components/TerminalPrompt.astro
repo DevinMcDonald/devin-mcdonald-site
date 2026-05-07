@@ -283,9 +283,9 @@ const dateStr = new Date().toLocaleDateString('en-US', {
       typedEl.textContent = '';
       ghostEl.textContent = '';
       cursorEl.style.display = '';
-      currentMatch = null;
       if (val.trim()) { cmdHistory.unshift(val); histIdx = -1; }
       handle(val);
+      currentMatch = null;
     }
     if (e.key === 'ArrowUp') {
       e.preventDefault();
