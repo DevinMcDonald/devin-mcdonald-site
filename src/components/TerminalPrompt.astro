@@ -26,6 +26,7 @@ const dateStr = new Date().toLocaleDateString('en-US', {
     </span>
     <span id="t-typed"></span>
     <span id="t-cursor" class="cursor"></span>
+    <span id="t-ghost" class="t-ghost"></span>
     <input
       id="t-input"
       type="text"
@@ -116,6 +117,7 @@ const dateStr = new Date().toLocaleDateString('en-US', {
   }
 
   .t-pfx-short { display: none; }
+  .t-ghost { color: var(--overlay0); }
 
   @media (max-width: 640px) {
     .t-pfx-full  { display: none; }
@@ -128,12 +130,29 @@ const dateStr = new Date().toLocaleDateString('en-US', {
   const input    = document.getElementById('t-input');
   const typedEl  = document.getElementById('t-typed');
   const cursorEl = document.getElementById('t-cursor');
+  const ghostEl  = document.getElementById('t-ghost');
   const shell    = document.getElementById('t-shell');
 
   const cmdHistory = [];
   let histIdx = -1;
+  let currentMatch = null;
 
   const SECTIONS = { fitness: '/fitness', music: '/music', embedded: '/embedded' };
+
+  function fuzzyMatchNote(query) {
+    const q = query.toLowerCase().replace(/\s+/g, '-');
+    if (!q) return null;
+    const prefix = notes.find(n => n.id.startsWith(q));
+    if (prefix) return { note: prefix, ghost: prefix.id.slice(q.length) };
+    const sub = notes.find(n => n.id.includes(q));
+    if (sub) return { note: sub, ghost: null };
+    const seq = notes.find(n => {
+      let qi = 0;
+      for (const ch of n.id) { if (ch === q[qi]) qi++; }
+      return qi === q.length;
+    });
+    return seq ? { note: seq, ghost: null } : null;
+  }
 
   function esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -191,13 +210,14 @@ const dateStr = new Date().toLocaleDateString('en-US', {
         if (!arg || arg === '~') { window.location.href = '/'; return; }
         if (arg === '..') { window.location.href = parentHref; return; }
         const argLower = arg.toLowerCase();
-        const note = notes.find(n =>
+        const exact = notes.find(n =>
           n.id === arg ||
           n.href.endsWith('/' + arg) ||
           n.title.toLowerCase() === argLower ||
           n.title.toLowerCase().replace(/\s+/g, '-') === argLower
         );
-        if (note) { window.location.href = note.href; return; }
+        const dest = exact ?? currentMatch?.note;
+        if (dest) { window.location.href = dest.href; return; }
         if (SECTIONS[arg]) { window.location.href = SECTIONS[arg]; return; }
         line(`<span class="red">bash: cd: ${esc(arg)}: No such file or directory</span>`);
         break;
@@ -241,8 +261,19 @@ const dateStr = new Date().toLocaleDateString('en-US', {
 
   // ── input wiring ──────────────────────────────────────────
   input.addEventListener('input', () => {
-    typedEl.textContent = input.value;
-    cursorEl.style.display = input.value.length ? 'none' : '';
+    const val = input.value;
+    typedEl.textContent = val;
+    cursorEl.style.display = val.length ? 'none' : '';
+
+    const m = val.match(/^cd\s+(.+)$/i);
+    if (m) {
+      const result = fuzzyMatchNote(m[1]);
+      currentMatch = result;
+      ghostEl.textContent = result?.ghost ?? '';
+    } else {
+      currentMatch = null;
+      ghostEl.textContent = '';
+    }
   });
 
   input.addEventListener('keydown', e => {
@@ -250,7 +281,9 @@ const dateStr = new Date().toLocaleDateString('en-US', {
       const val = input.value;
       input.value = '';
       typedEl.textContent = '';
+      ghostEl.textContent = '';
       cursorEl.style.display = '';
+      currentMatch = null;
       if (val.trim()) { cmdHistory.unshift(val); histIdx = -1; }
       handle(val);
     }

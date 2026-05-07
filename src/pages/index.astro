@@ -19,6 +19,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
       </span>
       <span id="typed-cmd"></span>
       <span id="cursor" class="cursor"></span>
+      <span id="ghost"></span>
       <input
         id="cmd-input"
         type="text"
@@ -163,6 +164,8 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     flex-shrink: 0;
   }
 
+  #ghost { color: var(--overlay0); }
+
   /* hidden real input overlays the visible typed text */
   #cmd-input {
     position: absolute;
@@ -211,10 +214,27 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   const promptLine  = document.getElementById('prompt-line');
   const typedCmd    = document.getElementById('typed-cmd');
   const cursorEl    = document.getElementById('cursor');
+  const ghostEl     = document.getElementById('ghost');
   const cmdInput    = document.getElementById('cmd-input');
   const container   = document.getElementById('terminal-container');
 
   let animationDone = false;
+  let currentMatch  = null; // current fuzzy cd match
+
+  function fuzzyMatchSection(query) {
+    const q = query.toLowerCase();
+    if (!q) return null;
+    const prefix = SECTIONS.find(s => s.name.startsWith(q));
+    if (prefix) return { section: prefix, ghost: prefix.name.slice(q.length) };
+    const sub = SECTIONS.find(s => s.name.includes(q));
+    if (sub) return { section: sub, ghost: null };
+    const seq = SECTIONS.find(s => {
+      let qi = 0;
+      for (const ch of s.name) { if (ch === q[qi]) qi++; }
+      return qi === q.length;
+    });
+    return seq ? { section: seq, ghost: null } : null;
+  }
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
@@ -453,11 +473,10 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
       case 'cd': {
         const target = args[0]?.replace(/\/$/, '');
         if (!target || target === '~' || target === '.') break;
-        const match = SECTIONS.find(
-          (s) => s.name === target || `/${s.name}` === target
-        );
-        if (match) {
-          window.location.href = match.path;
+        const exact = SECTIONS.find(s => s.name === target || `/${s.name}` === target);
+        const dest  = exact ?? currentMatch?.section;
+        if (dest) {
+          window.location.href = dest.path;
         } else {
           appendLine(`<span class="red">bash: cd: ${target}: No such file or directory</span>`);
         }
@@ -499,7 +518,19 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
 
   // wire up input
   cmdInput.addEventListener('input', () => {
-    typedCmd.textContent = cmdInput.value;
+    const val = cmdInput.value;
+    typedCmd.textContent = val;
+    cursorEl.style.display = val.length > 0 ? 'none' : 'inline-block';
+
+    const m = val.match(/^cd\s+(.+)$/i);
+    if (m) {
+      const result = fuzzyMatchSection(m[1]);
+      currentMatch = result;
+      ghostEl.textContent = result?.ghost ?? '';
+    } else {
+      currentMatch = null;
+      ghostEl.textContent = '';
+    }
   });
 
   cmdInput.addEventListener('keydown', (e) => {
@@ -507,19 +538,16 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
       const val = cmdInput.value;
       cmdInput.value = '';
       typedCmd.textContent = '';
+      ghostEl.textContent = '';
       cursorEl.style.display = 'inline-block';
       handleCommand(val);
+      currentMatch = null;
     }
   });
 
   // clicking anywhere on the terminal focuses the input
   container.addEventListener('click', () => {
     if (animationDone) cmdInput.focus();
-  });
-
-  // hide cursor when typing, show when empty
-  cmdInput.addEventListener('input', () => {
-    cursorEl.style.display = cmdInput.value.length > 0 ? 'none' : 'inline-block';
   });
 
   // ── go ───────────────────────────────────────────────────────────────────
