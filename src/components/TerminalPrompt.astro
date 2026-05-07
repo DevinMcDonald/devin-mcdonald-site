@@ -20,7 +20,10 @@ const dateStr = new Date().toLocaleDateString('en-US', {
 <div class="t-shell" id="t-shell">
   <div id="t-output"></div>
   <div class="t-prompt-row">
-    <span class="t-prefix"><span class="t-host">devin@devin-mcdonald.com:</span>{promptPath}$&nbsp;</span>
+    <span class="t-prefix">
+      <span class="t-pfx-full"><span class="t-host">devin@devin-mcdonald.com:</span>{promptPath}$&nbsp;</span>
+      <span class="t-pfx-short">~$&nbsp;</span>
+    </span>
     <span id="t-typed"></span>
     <span id="t-cursor" class="cursor"></span>
     <input
@@ -98,10 +101,14 @@ const dateStr = new Date().toLocaleDateString('en-US', {
   #t-output .t-ls-left  { min-width: 56ch; }
   #t-output .t-ls-cmt   { color: var(--overlay0); }
 
+  .t-pfx-short { display: none; }
+
   @media (max-width: 640px) {
-    .t-host              { display: none; }
+    .t-pfx-full          { display: none; }
+    .t-pfx-short         { display: inline; }
     #t-output .t-ls-left { min-width: 0; }
     #t-output .t-ls-cmt  { display: none; }
+    #t-output .t-ls-meta { display: none; }
   }
 </style>
 
@@ -128,13 +135,16 @@ const dateStr = new Date().toLocaleDateString('en-US', {
   }
 
   function prompt(cmd) {
-    line(`<span class="green"><span class="t-host">devin@devin-mcdonald.com:</span>${promptPath}$</span> ${esc(cmd)}`);
+    line(`<span class="green">` +
+      `<span class="t-pfx-full"><span class="t-host">devin@devin-mcdonald.com:</span>${promptPath}$</span>` +
+      `<span class="t-pfx-short">~$</span>` +
+      `</span> ${esc(cmd)}`);
   }
 
   function lsRow(note) {
     return `<div class="t-ls-entry">` +
-      `<span class="t-ls-left"><span class="perms">dr--r--r--</span>  ` +
-      `<span class="dim">devin  users  4096  ${dateStr}  </span>` +
+      `<span class="t-ls-left"><span class="perms t-ls-meta">dr--r--r--</span>  ` +
+      `<span class="dim t-ls-meta">devin  users  4096  ${dateStr}  </span>` +
       `<a class="t-dir" href="${note.href}">${esc(note.title)}/</a></span>` +
       `</div>`;
   }

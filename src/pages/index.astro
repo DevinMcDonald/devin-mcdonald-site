@@ -15,7 +15,10 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   <main id="terminal-container">
     <div id="output" aria-live="polite"></div>
     <div id="prompt-line" class="hidden">
-      <span class="prompt-prefix"><span class="host">devin@devin-mcdonald.com:</span>~$&nbsp;</span>
+      <span class="prompt-prefix">
+        <span class="pfx-full"><span class="host">devin@devin-mcdonald.com:</span>~$&nbsp;</span>
+        <span class="pfx-short">~$&nbsp;</span>
+      </span>
       <span id="typed-cmd"></span>
       <span id="cursor" class="cursor"></span>
       <input
@@ -98,6 +101,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   @media (max-width: 640px) {
     :global(.ls-left)    { min-width: 0; }
     :global(.ls-comment) { display: none; }
+    :global(.ls-meta)    { display: none; }
   }
 
   /* prompt line */
@@ -119,8 +123,11 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     white-space: pre;
   }
 
+  .pfx-short { display: none; }
+
   @media (max-width: 640px) {
-    .host { display: none; }
+    .pfx-full  { display: none; }
+    .pfx-short { display: inline; }
   }
 
   #typed-cmd {
@@ -208,15 +215,18 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   }
 
   function buildPromptHtml(cmd = '') {
-    return `<span class="green"><span class="host">devin@devin-mcdonald.com:</span>~$</span>&nbsp;${cmd}`;
+    return `<span class="green">` +
+      `<span class="pfx-full"><span class="host">devin@devin-mcdonald.com:</span>~$</span>` +
+      `<span class="pfx-short">~$</span>` +
+      `</span>&nbsp;${cmd}`;
   }
 
   function fitAsciiTitle() {
-    const w = document.getElementById('terminal-container').clientWidth;
     document.querySelectorAll('.ascii-art').forEach(el => {
       el.style.fontSize = '';
+      const avail = el.parentElement.clientWidth;
       let size = parseFloat(getComputedStyle(el).fontSize);
-      while (el.scrollWidth > w && size > 4) {
+      while (el.scrollWidth > avail && size > 4) {
         size -= 0.25;
         el.style.fontSize = size + 'px';
       }
@@ -227,8 +237,8 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
 
   function buildLsLine(section) {
     const left =
-      `<span class="perms">dr--r--r--</span>  ` +
-      `<span class="dim">devin  users  4096  ${dateStr}  </span>` +
+      `<span class="perms ls-meta">dr--r--r--</span>  ` +
+      `<span class="dim ls-meta">devin  users  4096  ${dateStr}  </span>` +
       `<a class="dir-link" href="${section.path}">${section.name}/</a>`;
     return `<span class="ls-left">${left}</span><span class="ls-comment"># ${section.desc}</span>`;
   }
