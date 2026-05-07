@@ -309,6 +309,23 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     await sleep(animationDone ? 0 : 220);
   }
 
+  // ── whoami sequence ──────────────────────────────────────────────────────
+
+  async function runWhoami() {
+    const cmd = 'whoami';
+    const cmdLine = appendLine(buildPromptHtml(''));
+    for (let i = 1; i <= cmd.length; i++) {
+      if (animationDone) break;
+      cmdLine.innerHTML = buildPromptHtml(cmd.slice(0, i));
+      await sleep(60);
+    }
+    cmdLine.innerHTML = buildPromptHtml(cmd);
+    await sleep(animationDone ? 0 : 120);
+    appendLine('<span class="mauve">devin</span> — embedded sw engineer / musician / lifter');
+    appendLine();
+    await sleep(animationDone ? 0 : 200);
+  }
+
   // ── ls sequence ──────────────────────────────────────────────────────────
 
   async function runLs() {
@@ -346,6 +363,9 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   function renderInstant() {
     const verbose = window.innerWidth > 640;
     printTitle();
+    appendLine(buildPromptHtml('whoami'));
+    appendLine('<span class="mauve">devin</span> — embedded sw engineer / musician / lifter');
+    appendLine();
     appendLine(buildPromptHtml(verbose ? 'ls -al' : 'ls'));
     if (verbose) {
       appendLine('<span class="dim">total 3</span>');
@@ -366,6 +386,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   async function runAnimation() {
     await runBoot();
     await runAscii();
+    await runWhoami();
     await runLs();
 
     animationDone = true;

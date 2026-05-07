@@ -174,7 +174,13 @@ const dateStr = new Date().toLocaleDateString('en-US', {
       case 'cd': {
         if (!arg || arg === '~') { window.location.href = '/'; return; }
         if (arg === '..') { window.location.href = parentHref; return; }
-        const note = notes.find(n => n.id === arg || n.href.endsWith('/' + arg));
+        const argLower = arg.toLowerCase();
+        const note = notes.find(n =>
+          n.id === arg ||
+          n.href.endsWith('/' + arg) ||
+          n.title.toLowerCase() === argLower ||
+          n.title.toLowerCase().replace(/\s+/g, '-') === argLower
+        );
         if (note) { window.location.href = note.href; return; }
         if (SECTIONS[arg]) { window.location.href = SECTIONS[arg]; return; }
         line(`<span class="red">bash: cd: ${esc(arg)}: No such file or directory</span>`);
