@@ -321,7 +321,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     }
     cmdLine.innerHTML = buildPromptHtml(cmd);
     await sleep(animationDone ? 0 : 120);
-    appendLine('<span class="mauve">devin</span> — embedded sw engineer / musician / lifter');
+    appendLine('<span class="mauve">devin</span> — embedded sw engineer / musician / aspiring gorilla');
     appendLine();
     await sleep(animationDone ? 0 : 200);
   }
@@ -364,7 +364,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     const verbose = window.innerWidth > 640;
     printTitle();
     appendLine(buildPromptHtml('whoami'));
-    appendLine('<span class="mauve">devin</span> — embedded sw engineer / musician / lifter');
+    appendLine('<span class="mauve">devin</span> — embedded sw engineer / musician / aspiring gorilla');
     appendLine();
     appendLine(buildPromptHtml(verbose ? 'ls -al' : 'ls'));
     if (verbose) {
@@ -444,7 +444,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
         return;
 
       case 'whoami':
-        appendLine('<span class="mauve">devin</span> — embedded sw engineer / musician / lifter');
+        appendLine('<span class="mauve">devin</span> — embedded sw engineer / musician / aspiring gorilla');
         break;
 
       case 'help':
