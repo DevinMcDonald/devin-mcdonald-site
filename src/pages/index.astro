@@ -123,7 +123,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   :global(.ls-comment) { color: var(--overlay0); }
 
   /* ls -al */
-  :global(.ls-al-entry) { display: flex; align-items: baseline; white-space: pre; }
+  :global(.ls-al-entry) { display: block; white-space: pre; }
   :global(.perms)       { color: var(--overlay1); }
 
   @media (max-width: 640px) {
@@ -364,17 +364,18 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     const [verb, ...args] = cmd.split(/\s+/);
 
     switch (verb.toLowerCase()) {
-      case 'ls':
-        appendLine('<span class="blue">./</span>');
-        for (const s of SECTIONS) appendLine(buildLsLine(s));
+      case 'ls': {
+        const verbose = args[0] === '-al' || args[0] === '-la';
+        if (verbose) {
+          appendLine('<span class="dim">total 3</span>');
+          appendLine(`<span class="ls-al-entry"><span class="perms">drwxr-xr-x</span>  <span class="dim">you  users  4096  ${dateStr}  </span><span class="blue">./</span></span>`);
+          for (const s of SECTIONS) appendLine(buildLsLineVerbose(s));
+        } else {
+          appendLine('<span class="blue">./</span>');
+          for (const s of SECTIONS) appendLine(buildLsLine(s));
+        }
         break;
-
-      case 'ls -al':
-      case 'ls -la':
-        appendLine('<span class="dim">total 3</span>');
-        appendLine(`<span class="ls-al-entry"><span class="perms">drwxr-xr-x</span>  <span class="dim">you  users  4096  ${dateStr}  </span><span class="blue">./</span></span>`);
-        for (const s of SECTIONS) appendLine(buildLsLineVerbose(s));
-        break;
+      }
 
       case 'cd': {
         const target = args[0]?.replace(/\/$/, '');
