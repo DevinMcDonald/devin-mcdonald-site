@@ -38,7 +38,7 @@ const promptPath = `~/${section}/${title.toLowerCase().replace(/\s+/g, '-')}`;
     </nav>
 
     <header class="note-header">
-      <span class="dim">devin@devin-mcdonald.com</span><span class="mauve">:</span><span class="blue">~/{section}</span><span class="mauve">$</span>
+      <span class="dim note-host">you@devin-mcdonald.com</span><span class="mauve note-host">:</span><span class="blue">~/{section}</span><span class="mauve">$</span>
       <span class="dim"> cat {title.toLowerCase().replace(/\s+/g, '-')}.md</span>
     </header>
 
@@ -64,7 +64,8 @@ const promptPath = `~/${section}/${title.toLowerCase().replace(/\s+/g, '-')}`;
   }
 
   @media (max-width: 640px) {
-    .note-page { padding: 1rem; }
+    .note-page  { padding: 1rem; }
+    .note-host  { display: none; }
   }
 
   .note-nav {

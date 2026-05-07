@@ -16,7 +16,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     <div id="output" aria-live="polite"></div>
     <div id="prompt-line" class="hidden">
       <span class="prompt-prefix">
-        <span class="pfx-full"><span class="host">devin@devin-mcdonald.com:</span>~$&nbsp;</span>
+        <span class="pfx-full"><span class="host">you@devin-mcdonald.com:</span>~$&nbsp;</span>
         <span class="pfx-short">~$&nbsp;</span>
       </span>
       <span id="typed-cmd"></span>
@@ -34,7 +34,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
 
     <noscript>
       <div class="noscript-nav">
-        <p>devin@devin-mcdonald.com:~$ ls -al</p>
+        <p>you@devin-mcdonald.com:~$ ls -al</p>
         {SECTIONS.map(s => (
           <a href={s.path}>dr--r--r-- &nbsp;{s.name}/</a>
         ))}
@@ -118,11 +118,15 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     white-space: pre;
   }
 
-  .pfx-short { display: none; }
+  :global(.pfx-short) { display: none; }
+  :global(.ls-row) { display: flex; align-items: baseline; }
+  :global(.ls-row .dir-link) { min-width: 12ch; }
+  :global(.ls-comment) { color: var(--overlay0); }
 
   @media (max-width: 640px) {
-    .pfx-full  { display: none; }
-    .pfx-short { display: inline; }
+    :global(.pfx-full)   { display: none; }
+    :global(.pfx-short)  { display: inline; }
+    :global(.ls-comment) { display: none; }
   }
 
   #typed-cmd {
@@ -211,7 +215,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
 
   function buildPromptHtml(cmd = '') {
     return `<span class="green">` +
-      `<span class="pfx-full"><span class="host">devin@devin-mcdonald.com:</span>~$</span>` +
+      `<span class="pfx-full"><span class="host">you@devin-mcdonald.com:</span>~$</span>` +
       `<span class="pfx-short">~$</span>` +
       `</span>&nbsp;${cmd}`;
   }
@@ -231,8 +235,10 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   window.addEventListener('resize', fitAsciiTitle);
 
   function buildLsLine(section) {
-    return `<a class="dir-link" href="${section.path}">${section.name}/</a>` +
-      `  <span class="ls-comment"># ${section.desc}</span>`;
+    return `<span class="ls-row">` +
+      `<a class="dir-link" href="${section.path}">${section.name}/</a>` +
+      `<span class="ls-comment">  # ${section.desc}</span>` +
+      `</span>`;
   }
 
   // ── skip handler ──────────────────────────────────────────────────────────

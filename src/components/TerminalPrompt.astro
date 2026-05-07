@@ -21,8 +21,8 @@ const dateStr = new Date().toLocaleDateString('en-US', {
   <div id="t-output"></div>
   <div class="t-prompt-row">
     <span class="t-prefix">
-      <span class="t-pfx-full"><span class="t-host">devin@devin-mcdonald.com:</span>{promptPath}$&nbsp;</span>
-      <span class="t-pfx-short">~$&nbsp;</span>
+      <span class="t-pfx-full"><span class="t-host">you@devin-mcdonald.com:</span>{promptPath}$&nbsp;</span>
+      <span class="t-pfx-short">{promptPath}$&nbsp;</span>
     </span>
     <span id="t-typed"></span>
     <span id="t-cursor" class="cursor"></span>
@@ -131,7 +131,7 @@ const dateStr = new Date().toLocaleDateString('en-US', {
 
   function prompt(cmd) {
     line(`<span class="green">` +
-      `<span class="t-pfx-full"><span class="t-host">devin@devin-mcdonald.com:</span>${promptPath}$</span>` +
+      `<span class="t-pfx-full"><span class="t-host">you@devin-mcdonald.com:</span>${promptPath}$</span>` +
       `<span class="t-pfx-short">~$</span>` +
       `</span> ${esc(cmd)}`);
   }
