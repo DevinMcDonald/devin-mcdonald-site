@@ -90,7 +90,8 @@ const promptPath = `~/${section}/${title.toLowerCase().replace(/\s+/g, '-')}`;
     line-height: 1.2;
     margin: 2rem 0 1rem;
     overflow-x: clip;
-    white-space: pre;
+    white-space: pre-wrap;
+    word-break: break-all;
   }
 
   :global(.figlet-h1) {
