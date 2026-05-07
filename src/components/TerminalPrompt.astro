@@ -137,7 +137,13 @@ const dateStr = new Date().toLocaleDateString('en-US', {
   }
 
   function lsRow(note) {
-    return `<div class="t-ls-entry">` +
+    return `<div class="t-ls-entry"><a class="t-dir" href="${note.href}">${esc(note.title)}/</a></div>`;
+  }
+
+  function lsRowVerbose(note) {
+    return `<div class="t-ls-entry" style="white-space:pre">` +
+      `<span class="perms">dr--r--r--</span>  ` +
+      `<span class="dim">you  users  4096  ${dateStr}  </span>` +
       `<a class="t-dir" href="${note.href}">${esc(note.title)}/</a>` +
       `</div>`;
   }
@@ -152,11 +158,16 @@ const dateStr = new Date().toLocaleDateString('en-US', {
 
     switch (verb.toLowerCase()) {
 
-      case 'ls':
-      case 'ls -al':
-      case 'ls -la': {
-        line(`<a class="t-dir" href="${parentHref}">../</a>`);
-        for (const n of notes) line(lsRow(n));
+      case 'ls': {
+        const verbose = arg === '-al' || arg === '-la';
+        if (verbose) {
+          line(`<span class="dim">total ${notes.length}</span>`);
+          line(`<span style="white-space:pre"><span class="perms">drwxr-xr-x</span>  <span class="dim">you  users  4096  ${dateStr}  </span><a class="t-dir" href="${parentHref}">../</a></span>`);
+          for (const n of notes) line(lsRowVerbose(n));
+        } else {
+          line(`<a class="t-dir" href="${parentHref}">../</a>`);
+          for (const n of notes) line(lsRow(n));
+        }
         break;
       }
 
@@ -185,6 +196,7 @@ const dateStr = new Date().toLocaleDateString('en-US', {
       case 'help':
         line(`<span class="yellow">available commands:</span>`);
         line(`  <span class="blue">ls</span>           list notes`);
+        line(`  <span class="blue">ls -al</span>       list notes with details`);
         line(`  <span class="blue">cd &lt;name&gt;</span>    navigate to a note or section`);
         line(`  <span class="blue">cd ..</span>         go back`);
         line(`  <span class="blue">cd ~</span>          go home`);

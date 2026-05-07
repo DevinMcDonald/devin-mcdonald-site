@@ -119,9 +119,14 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   }
 
   :global(.pfx-short) { display: none; }
+  /* plain ls */
   :global(.ls-row) { display: flex; align-items: baseline; }
   :global(.ls-row .dir-link) { min-width: 12ch; }
   :global(.ls-comment) { color: var(--overlay0); }
+
+  /* ls -al */
+  :global(.ls-al-entry) { display: flex; align-items: baseline; white-space: pre; }
+  :global(.perms)       { color: var(--overlay1); }
 
   @media (max-width: 640px) {
     :global(.pfx-full)   { display: none; }
@@ -241,6 +246,15 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
       `</span>`;
   }
 
+  function buildLsLineVerbose(section) {
+    return `<span class="ls-al-entry">` +
+      `<span class="perms">dr--r--r--</span>  ` +
+      `<span class="dim">you  users  4096  ${dateStr}  </span>` +
+      `<a class="dir-link" href="${section.path}">${section.name}/</a>` +
+      `<span class="ls-comment">  # ${section.desc}</span>` +
+      `</span>`;
+  }
+
   // ── skip handler ──────────────────────────────────────────────────────────
 
   function skipToEnd() {
@@ -300,10 +314,10 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   // ── ls sequence ──────────────────────────────────────────────────────────
 
   async function runLs() {
+    const verbose = window.innerWidth > 640;
+    const cmd = verbose ? 'ls -al' : 'ls';
     const cmdLine = appendLine(buildPromptHtml(''));
 
-    // type "ls -al" character by character
-    const cmd = 'ls -al';
     for (let i = 1; i <= cmd.length; i++) {
       if (animationDone) break;
       cmdLine.innerHTML = buildPromptHtml(cmd.slice(0, i));
@@ -312,11 +326,16 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     cmdLine.innerHTML = buildPromptHtml(cmd);
     await sleep(animationDone ? 0 : 120);
 
-    appendLine('<span class="blue">./</span>');
+    if (verbose) {
+      appendLine('<span class="dim">total 3</span>');
+      appendLine(`<span class="ls-al-entry"><span class="perms">drwxr-xr-x</span>  <span class="dim">you  users  4096  ${dateStr}  </span><span class="blue">./</span></span>`);
+    } else {
+      appendLine('<span class="blue">./</span>');
+    }
     await sleep(animationDone ? 0 : 60);
 
     for (const section of SECTIONS) {
-      appendLine(buildLsLine(section), 'ls-entry');
+      appendLine(verbose ? buildLsLineVerbose(section) : buildLsLine(section));
       if (!animationDone) await sleep(70);
     }
 
@@ -352,6 +371,13 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
         for (const s of SECTIONS) appendLine(buildLsLine(s));
         break;
 
+      case 'ls -al':
+      case 'ls -la':
+        appendLine('<span class="dim">total 3</span>');
+        appendLine(`<span class="ls-al-entry"><span class="perms">drwxr-xr-x</span>  <span class="dim">you  users  4096  ${dateStr}  </span><span class="blue">./</span></span>`);
+        for (const s of SECTIONS) appendLine(buildLsLineVerbose(s));
+        break;
+
       case 'cd': {
         const target = args[0]?.replace(/\/$/, '');
         if (!target || target === '~' || target === '.') break;
@@ -382,6 +408,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
       case 'help':
         appendLine('<span class="yellow">available commands:</span>');
         appendLine('  <span class="blue">ls</span>          list sections');
+        appendLine('  <span class="blue">ls -al</span>      list with details');
         appendLine('  <span class="blue">cd &lt;name&gt;</span>   navigate to a section');
         appendLine('  <span class="blue">whoami</span>      about me');
         appendLine('  <span class="blue">clear</span>       clear terminal, keep title');
