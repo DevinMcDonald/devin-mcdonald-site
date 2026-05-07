@@ -20,7 +20,7 @@ const { title, section, sectionPath, notes = [] } = Astro.props;
 
 let titleAscii = '';
 try {
-  titleAscii = figlet.textSync(title.toUpperCase(), { font: 'Big' }).trimEnd();
+  titleAscii = figlet.textSync(title.toUpperCase(), { font: 'ANSI Shadow' }).trimEnd();
 } catch {
   titleAscii = title.toUpperCase();
 }
