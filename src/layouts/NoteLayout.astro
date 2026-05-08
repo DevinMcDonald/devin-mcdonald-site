@@ -192,6 +192,51 @@ try {
     background: var(--mantle);
   }
 
+  /* ── dataview ────────────────────────────────────────── */
+  :global(.dv-list) {
+    list-style: disc;
+    margin: 0.5em 0 1em 1.5em;
+  }
+
+  :global(.dv-list li) {
+    margin-bottom: 0.3em;
+    line-height: 1.6;
+  }
+
+  :global(.dv-table) {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+    display: block;
+    overflow-x: auto;
+  }
+
+  :global(.dv-table th),
+  :global(.dv-table td) {
+    border: 1px solid var(--surface1);
+    padding: 0.4em 0.8em;
+    text-align: left;
+  }
+
+  :global(.dv-table th) {
+    color: var(--mauve);
+    background: var(--surface0);
+  }
+
+  :global(.dv-table tr:nth-child(even) td) {
+    background: var(--mantle);
+  }
+
+  :global(.dv-empty) {
+    color: var(--overlay0);
+    font-style: italic;
+  }
+
+  :global(.dv-error) {
+    color: var(--red);
+    font-size: 0.85em;
+  }
+
   /* ── youtube embeds ──────────────────────────────────── */
   :global(.yt-embed) {
     position: relative;

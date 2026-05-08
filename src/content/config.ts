@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm';
 import remarkRehype from 'remark-rehype';
 import rehypeRaw from 'rehype-raw';
 import rehypeStringify from 'rehype-stringify';
-import { remarkStripDataview } from '../plugins/remark-strip-dataview.mjs';
+import { remarkDataview }      from '../plugins/remark-dataview.mjs';
 import { remarkYouTubeEmbeds }  from '../plugins/remark-youtube-embeds.mjs';
 import { remarkWikiLinks }      from '../plugins/remark-wiki-links.mjs';
 import { remarkFigletHeadings } from '../plugins/remark-figlet-headings.mjs';
@@ -34,6 +34,12 @@ function parseWikiLinks(content: string): string[] {
   let m: RegExpExecArray | null;
   while ((m = re.exec(content)) !== null) titles.push(m[1].trim());
   return titles;
+}
+
+function normalizeTags(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.filter((t): t is string => typeof t === 'string');
+  if (typeof raw === 'string') return [raw];
+  return [];
 }
 
 function isMoc(data: Record<string, any>): boolean {
@@ -122,11 +128,11 @@ function flattenTree(nodes: SiteNode[]): SiteNode[] {
 
 // ── processor factory ─────────────────────────────────────────────────────────
 
-function makeProcessor(urlMap: Map<string, string>) {
+function makeProcessor(urlMap: Map<string, string>, vaultData: any[]) {
   return unified()
     .use(remarkParse)
     .use(remarkGfm)
-    .use(remarkStripDataview)
+    .use(remarkDataview, { vaultData })
     .use(remarkYouTubeEmbeds)
     .use(remarkWikiLinks, { urlMap })
     .use(remarkFigletHeadings)
@@ -180,8 +186,17 @@ function obsidianSiteLoader() {
       const allNodes = flattenTree(topLevelNodes);
       logger.info(`Found ${allNodes.length} publishable note(s).`);
 
+      // Build vaultData from ALL vault files for Dataview queries (not just published)
+      const vaultData = Array.from(filesMap.entries()).map(([title, entry]) => ({
+        title,
+        data:   entry.data,
+        tags:   normalizeTags(entry.data.tags),
+        url:    urlMap.get(title) ?? null,
+        folder: null,
+      }));
+
       // Pass 2: render each node with full URL map and store
-      const processor = makeProcessor(urlMap);
+      const processor = makeProcessor(urlMap, vaultData);
 
       for (const node of allNodes) {
         const html = String(await processor.process(node.content));
