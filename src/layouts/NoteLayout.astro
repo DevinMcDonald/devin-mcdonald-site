@@ -11,12 +11,15 @@ interface NoteItem {
 
 interface Props {
   title: string;
-  section: string;
-  sectionPath: string;
+  section: string;       // display path for header, e.g. 'personal/fitness-overview'
+  sectionPath: string;   // href for 'cd ..'
+  promptPath?: string;   // overrides auto-computed prompt path
   notes?: NoteItem[];
 }
 
 const { title, section, sectionPath, notes = [] } = Astro.props;
+const promptPath = Astro.props.promptPath
+  ?? (section ? `~/${section}/${title.toLowerCase().replace(/\s+/g, '-')}` : `~/${title.toLowerCase().replace(/\s+/g, '-')}`);
 
 let titleAscii = '';
 try {
@@ -24,8 +27,6 @@ try {
 } catch {
   titleAscii = title.toUpperCase();
 }
-
-const promptPath = `~/${section}/${title.toLowerCase().replace(/\s+/g, '-')}`;
 ---
 
 <BaseLayout title={`${title} — devin-mcdonald.com`}>

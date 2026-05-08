@@ -1,9 +1,15 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
 
-const SECTIONS = [
-  { name: 'fitness',  path: '/fitness',  desc: 'training program' },
-];
+const allEntries = await getCollection('site');
+const SECTIONS = allEntries
+  .filter(e => e.data.urlPath.length === 1)
+  .map(e => ({
+    name: e.data.title,
+    path: e.data.urlString,
+    desc: (e.data.description as string | undefined) ?? '',
+  }));
 
 const NOW = new Date();
 const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });

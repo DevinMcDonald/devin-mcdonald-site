@@ -12,8 +12,9 @@ export function toSlug(name) {
     .replace(/^-|-$/g, '');
 }
 
+// urlMap: Map<noteTitle, urlString>  e.g. "Push Split" -> "/personal/fitness-overview/push-split"
 export function remarkWikiLinks(options = {}) {
-  const { basePath = '/fitness', validIds = null } = options;
+  const { urlMap = new Map() } = options;
 
   return (tree) => {
     visit(tree, 'text', (node, index, parent) => {
@@ -29,13 +30,12 @@ export function remarkWikiLinks(options = {}) {
           parts.push({ type: 'text', value: node.value.slice(last, match.index) });
         }
 
-        const target = match[1].trim();
+        const target  = match[1].trim();
         const display = match[2]?.trim() ?? target;
-        const slug = toSlug(target);
+        const url     = urlMap.get(target);
 
-        const known = validIds === null || validIds.has(slug);
-        parts.push(known
-          ? { type: 'link', url: `${basePath}/${slug}`, title: null, children: [{ type: 'text', value: display }] }
+        parts.push(url
+          ? { type: 'link', url, title: null, children: [{ type: 'text', value: display }] }
           : { type: 'text', value: display }
         );
 
@@ -43,7 +43,6 @@ export function remarkWikiLinks(options = {}) {
       }
 
       if (parts.length === 0) return;
-
       if (last < node.value.length) {
         parts.push({ type: 'text', value: node.value.slice(last) });
       }

@@ -1,0 +1,45 @@
+---
+import { getCollection } from 'astro:content';
+import NoteLayout from '../layouts/NoteLayout.astro';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('site');
+
+  return entries.map(entry => {
+    const { isMoc, children, parentUrl, urlPath, urlString } = entry.data;
+
+    // For MOC pages: notes = direct children (for ls/cd)
+    // For leaf pages: notes = siblings (same parent, excluding self)
+    const notes = isMoc
+      ? children
+      : entries
+          .filter(e => e.data.parentUrl === parentUrl && e.id !== entry.id)
+          .map(e => ({ id: e.data.urlPath.at(-1)!, title: e.data.title, href: e.data.urlString }));
+
+    // section: the path segment shown in the header prompt, excluding the last segment
+    const sectionDisplay = urlPath.slice(0, -1).join('/');
+
+    return {
+      params: { path: entry.id },
+      props:  { entry, notes, sectionDisplay, parentUrl },
+    };
+  });
+}
+
+const { entry, notes, sectionDisplay, parentUrl } = Astro.props;
+const { title, urlPath } = entry.data;
+const html = (entry as any).rendered?.html ?? '';
+
+// Prompt path shown in TerminalPrompt: ~/full/url/path
+const promptPath = '~/' + urlPath.join('/');
+---
+
+<NoteLayout
+  title={title}
+  section={sectionDisplay}
+  sectionPath={parentUrl}
+  promptPath={promptPath}
+  notes={notes}
+>
+  <div set:html={html} />
+</NoteLayout>
