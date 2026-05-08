@@ -214,7 +214,7 @@ function parseQuery(raw) {
 
 // ── executor ──────────────────────────────────────────────────────────────────
 
-function executeQuery(raw, vaultData) {
+export function executeQuery(raw, vaultData) {
   const { queryType, fieldExpr, columns, from, where, sort, sortDir, limit } = parseQuery(raw);
 
   if (!queryType || queryType === 'TASK') return null;

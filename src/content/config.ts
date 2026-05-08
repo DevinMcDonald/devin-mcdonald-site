@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm';
 import remarkRehype from 'remark-rehype';
 import rehypeRaw from 'rehype-raw';
 import rehypeStringify from 'rehype-stringify';
-import { remarkDataview }      from '../plugins/remark-dataview.mjs';
+import { remarkDataview, executeQuery } from '../plugins/remark-dataview.mjs';
 import { remarkYouTubeEmbeds }  from '../plugins/remark-youtube-embeds.mjs';
 import { remarkWikiLinks }      from '../plugins/remark-wiki-links.mjs';
 import { remarkFigletHeadings } from '../plugins/remark-figlet-headings.mjs';
@@ -185,15 +185,42 @@ function obsidianSiteLoader() {
 
       const allNodes = flattenTree(topLevelNodes);
 
-      // Also collect publish:true notes not reached by the MOC traversal.
-      // These get a flat URL (/<slug>) so Dataview results can link to them.
+      // ── Orphan parent inference ────────────────────────────────────────────
+      // Run each MOC's Dataview queries against a preliminary vaultData (orphan
+      // URLs are null at this point) to discover which orphan notes each MOC
+      // "claims". Claimed orphans are nested under that MOC's URL path; the rest
+      // get a flat /<slug> URL with parentUrl='/'.
+      const dvBlockRe = /```dataview\r?\n([\s\S]*?)```/g;
+
+      const prelimVaultData = Array.from(filesMap.entries()).map(([t, e]) => ({
+        title: t, data: e.data, tags: normalizeTags(e.data.tags), url: urlMap.get(t) ?? null, folder: null,
+      }));
+
+      // title → MOC SiteNode that claims it via Dataview
+      const orphanParentMoc = new Map<string, SiteNode>();
+      for (const mocNode of allNodes.filter(n => n.isMoc)) {
+        let m: RegExpExecArray | null;
+        const re = new RegExp(dvBlockRe.source, 'g');
+        while ((m = re.exec(mocNode.content)) !== null) {
+          const result = executeQuery(m[1], prelimVaultData);
+          if (!result) continue;
+          for (const row of result.rows) {
+            if (!urlMap.has(row.title) && !orphanParentMoc.has(row.title)) {
+              orphanParentMoc.set(row.title, mocNode);
+            }
+          }
+        }
+      }
+
+      // Build orphan nodes with correct parent context
       const orphanNodes: SiteNode[] = [];
       for (const [title, entry] of filesMap) {
         if (entry.data.publish !== true || urlMap.has(title)) continue;
-        const slug      = typeof entry.data.slug === 'string' ? entry.data.slug : toSlug(title);
-        const urlPath   = [slug];
-        const urlString = '/' + slug;
-        const parentUrl = '/';
+        const slug        = typeof entry.data.slug === 'string' ? entry.data.slug : toSlug(title);
+        const parentMoc   = orphanParentMoc.get(title);
+        const urlPath     = parentMoc ? [...parentMoc.urlPath, slug] : [slug];
+        const urlString   = '/' + urlPath.join('/');
+        const parentUrl   = parentMoc ? parentMoc.urlString : '/';
         urlMap.set(title, urlString);
         const aliases: unknown[] = Array.isArray(entry.data.aliases) ? entry.data.aliases
           : typeof entry.data.aliases === 'string' ? [entry.data.aliases] : [];
