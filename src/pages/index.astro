@@ -290,7 +290,7 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   function buildLsLineVerbose(section) {
     return `<span class="ls-al-entry">` +
       `<span class="perms">dr--r--r--</span>  ` +
-      `<span class="dim">you  users  4096  ${dateStr}  </span>` +
+      `<span class="dim">devin  users  4096  ${dateStr}  </span>` +
       `<a class="dir-link" href="${section.path}">${section.name}/</a>` +
       `<span class="ls-comment">  # ${section.desc}</span>` +
       `</span>`;
@@ -393,8 +393,8 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     await sleep(animationDone ? 0 : 120);
 
     if (verbose) {
-      appendLine('<span class="dim">total 3</span>');
-      appendLine(`<span class="ls-al-entry"><span class="perms">drwxr-xr-x</span>  <span class="dim">you  users  4096  ${dateStr}  </span><span class="blue">./</span></span>`);
+      appendLine(`<span class="dim">total ${SECTIONS.length + 1}</span>`);
+      appendLine(`<span class="ls-al-entry"><span class="perms">drwxr-xr-x</span>  <span class="dim">devin  users  4096  ${dateStr}  </span><span class="blue">./</span></span>`);
     } else {
       appendLine('<span class="blue">./</span>');
     }
@@ -419,8 +419,8 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
     appendLine();
     appendLine(buildPromptHtml(verbose ? 'ls -al' : 'ls'));
     if (verbose) {
-      appendLine('<span class="dim">total 3</span>');
-      appendLine(`<span class="ls-al-entry"><span class="perms">drwxr-xr-x</span>  <span class="dim">you  users  4096  ${dateStr}  </span><span class="blue">./</span></span>`);
+      appendLine(`<span class="dim">total ${SECTIONS.length + 1}</span>`);
+      appendLine(`<span class="ls-al-entry"><span class="perms">drwxr-xr-x</span>  <span class="dim">devin  users  4096  ${dateStr}  </span><span class="blue">./</span></span>`);
       for (const s of SECTIONS) appendLine(buildLsLineVerbose(s));
     } else {
       appendLine('<span class="blue">./</span>');
@@ -460,8 +460,8 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
       case 'ls': {
         const verbose = args[0] === '-al' || args[0] === '-la';
         if (verbose) {
-          appendLine('<span class="dim">total 3</span>');
-          appendLine(`<span class="ls-al-entry"><span class="perms">drwxr-xr-x</span>  <span class="dim">you  users  4096  ${dateStr}  </span><span class="blue">./</span></span>`);
+          appendLine(`<span class="dim">total ${SECTIONS.length + 1}</span>`);
+          appendLine(`<span class="ls-al-entry"><span class="perms">drwxr-xr-x</span>  <span class="dim">devin  users  4096  ${dateStr}  </span><span class="blue">./</span></span>`);
           for (const s of SECTIONS) appendLine(buildLsLineVerbose(s));
         } else {
           appendLine('<span class="blue">./</span>');

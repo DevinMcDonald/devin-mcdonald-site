@@ -178,7 +178,7 @@ const dateStr = new Date().toLocaleDateString('en-US', {
   function lsRowVerbose(note) {
     return `<div class="t-ls-entry" style="white-space:pre">` +
       `<span class="perms">dr--r--r--</span>  ` +
-      `<span class="dim">you  users  4096  ${dateStr}  </span>` +
+      `<span class="dim">devin  users  4096  ${dateStr}  </span>` +
       `<a class="t-dir" href="${note.href}">${esc(note.title)}/</a>` +
       `</div>`;
   }
@@ -196,8 +196,8 @@ const dateStr = new Date().toLocaleDateString('en-US', {
       case 'ls': {
         const verbose = arg === '-al' || arg === '-la';
         if (verbose) {
-          line(`<span class="dim">total ${notes.length}</span>`);
-          line(`<span style="white-space:pre"><span class="perms">drwxr-xr-x</span>  <span class="dim">you  users  4096  ${dateStr}  </span><a class="t-dir" href="${parentHref}">../</a></span>`);
+          line(`<span class="dim">total ${notes.length + 1}</span>`);
+          line(`<span style="white-space:pre"><span class="perms">drwxr-xr-x</span>  <span class="dim">devin  users  4096  ${dateStr}  </span><a class="t-dir" href="${parentHref}">../</a></span>`);
           for (const n of notes) line(lsRowVerbose(n));
         } else {
           line(`<a class="t-dir" href="${parentHref}">../</a>`);
