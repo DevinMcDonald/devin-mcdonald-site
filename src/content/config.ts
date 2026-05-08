@@ -203,7 +203,7 @@ function obsidianSiteLoader() {
         orphanNodes.push({
           title: typeof entry.data.title === 'string' ? entry.data.title : title,
           slug, urlPath, urlString, parentUrl,
-          isMoc: false, data: entry.data, content: entry.content, children: [],
+          isMoc: false, data: { ...entry.data, isOrphan: true }, content: entry.content, children: [],
         });
       }
 

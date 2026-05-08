@@ -4,7 +4,7 @@ import { getCollection } from 'astro:content';
 
 const allEntries = await getCollection('site');
 const SECTIONS = allEntries
-  .filter(e => e.data.urlPath.length === 1)
+  .filter(e => e.data.urlPath.length === 1 && !e.data.isOrphan)
   .map(e => ({
     name: e.data.title,
     path: e.data.urlString,

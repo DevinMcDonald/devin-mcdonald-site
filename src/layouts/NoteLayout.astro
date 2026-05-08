@@ -237,6 +237,22 @@ try {
     font-size: 0.85em;
   }
 
+  /* ── task list checkboxes ────────────────────────────── */
+  :global(.note-content .task-list-item) {
+    list-style: none;
+    margin-left: -1em;
+  }
+
+  :global(.note-content .task-list-item input[type="checkbox"]) {
+    margin-right: 0.5em;
+    accent-color: var(--mauve);
+  }
+
+  :global(.note-content .task-list-item:has(input:checked)) {
+    color: var(--overlay0);
+    text-decoration: line-through;
+  }
+
   /* ── youtube embeds ──────────────────────────────────── */
   :global(.yt-embed) {
     position: relative;
@@ -269,4 +285,28 @@ try {
 
   fitFigletHeadings();
   window.addEventListener('resize', fitFigletHeadings);
+
+  // ── interactive checkboxes (persisted to localStorage) ───────────────
+  const STORAGE_KEY = 'checkboxes:' + location.pathname;
+
+  function initCheckboxes() {
+    const boxes = document.querySelectorAll<HTMLInputElement>('.note-content input[type="checkbox"]');
+    if (boxes.length === 0) return;
+
+    const saved: Record<number, boolean> = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+
+    boxes.forEach((box, i) => {
+      box.removeAttribute('disabled');
+      box.style.cursor = 'pointer';
+      if (saved[i] !== undefined) box.checked = saved[i];
+
+      box.addEventListener('change', () => {
+        const state: Record<number, boolean> = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+        state[i] = box.checked;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      });
+    });
+  }
+
+  initCheckboxes();
 </script>
