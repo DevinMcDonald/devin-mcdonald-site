@@ -230,16 +230,19 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
   function fuzzyMatchSection(query) {
     const q = query.toLowerCase();
     if (!q) return null;
-    const prefix = SECTIONS.find(s => s.name.startsWith(q));
-    if (prefix) return { section: prefix, ghost: prefix.name.slice(q.length) };
-    const sub = SECTIONS.find(s => s.name.includes(q));
-    if (sub) return { section: sub, ghost: null };
-    const seq = SECTIONS.find(s => {
-      let qi = 0;
-      for (const ch of s.name) { if (ch === q[qi]) qi++; }
-      return qi === q.length;
-    });
-    return seq ? { section: seq, ghost: null } : null;
+    const slug = s => s.path.replace(/^\//, '');
+    // prefix on URL slug (what user would type)
+    let m = SECTIONS.find(s => slug(s).startsWith(q));
+    if (m) return { section: m, ghost: slug(m).slice(q.length) };
+    // prefix on lowercased title
+    m = SECTIONS.find(s => s.name.toLowerCase().startsWith(q));
+    if (m) return { section: m, ghost: m.name.toLowerCase().slice(q.length) };
+    // substring on slug
+    m = SECTIONS.find(s => slug(s).includes(q));
+    if (m) return { section: m, ghost: null };
+    // subsequence on slug
+    m = SECTIONS.find(s => { let qi = 0; for (const ch of slug(s)) { if (ch === q[qi]) qi++; } return qi === q.length; });
+    return m ? { section: m, ghost: null } : null;
   }
 
   // ── helpers ──────────────────────────────────────────────────────────────
@@ -479,7 +482,13 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
       case 'cd': {
         const target = args[0]?.replace(/\/$/, '');
         if (!target || target === '~' || target === '.') break;
-        const exact = SECTIONS.find(s => s.name === target || `/${s.name}` === target);
+        const tLower = target.toLowerCase();
+        const exact = SECTIONS.find(s =>
+          s.name === target ||
+          s.name.toLowerCase() === tLower ||
+          s.path === '/' + target ||
+          s.path.replace(/^\//, '') === tLower
+        );
         const dest  = exact ?? currentMatch?.section;
         if (dest) {
           window.location.href = dest.path;
