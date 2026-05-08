@@ -184,7 +184,30 @@ function obsidianSiteLoader() {
       }
 
       const allNodes = flattenTree(topLevelNodes);
-      logger.info(`Found ${allNodes.length} publishable note(s).`);
+
+      // Also collect publish:true notes not reached by the MOC traversal.
+      // These get a flat URL (/<slug>) so Dataview results can link to them.
+      const orphanNodes: SiteNode[] = [];
+      for (const [title, entry] of filesMap) {
+        if (entry.data.publish !== true || urlMap.has(title)) continue;
+        const slug      = typeof entry.data.slug === 'string' ? entry.data.slug : toSlug(title);
+        const urlPath   = [slug];
+        const urlString = '/' + slug;
+        const parentUrl = '/';
+        urlMap.set(title, urlString);
+        const aliases: unknown[] = Array.isArray(entry.data.aliases) ? entry.data.aliases
+          : typeof entry.data.aliases === 'string' ? [entry.data.aliases] : [];
+        for (const alias of aliases) {
+          if (typeof alias === 'string') urlMap.set(alias, urlString);
+        }
+        orphanNodes.push({
+          title: typeof entry.data.title === 'string' ? entry.data.title : title,
+          slug, urlPath, urlString, parentUrl,
+          isMoc: false, data: entry.data, content: entry.content, children: [],
+        });
+      }
+
+      logger.info(`Found ${allNodes.length} MOC-linked note(s), ${orphanNodes.length} orphan note(s).`);
 
       // Build vaultData from ALL vault files for Dataview queries (not just published)
       const vaultData = Array.from(filesMap.entries()).map(([title, entry]) => ({
@@ -198,7 +221,7 @@ function obsidianSiteLoader() {
       // Pass 2: render each node with full URL map and store
       const processor = makeProcessor(urlMap, vaultData);
 
-      for (const node of allNodes) {
+      for (const node of [...allNodes, ...orphanNodes]) {
         const html = String(await processor.process(node.content));
 
         const childItems = node.children.map(c => ({
