@@ -285,13 +285,12 @@ export function remarkDataview({ vaultData = [] } = {}) {
     const targets = [];
 
     visit(tree, 'code', (node, index, parent) => {
-      if (node.lang !== 'dataview' && node.lang !== 'dataviewjs') return;
+      if (node.lang !== 'dataview' && node.lang !== 'dataviewjs' && node.lang !== 'leaflet') return;
       targets.push({ node, index, parent });
     });
 
     for (const { node, index, parent } of targets.reverse()) {
-      if (node.lang === 'dataviewjs') {
-        // strip — can't execute arbitrary JS at build time
+      if (node.lang === 'dataviewjs' || node.lang === 'leaflet') {
         parent.children.splice(index, 1);
         continue;
       }
