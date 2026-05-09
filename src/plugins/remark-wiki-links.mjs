@@ -1,6 +1,6 @@
 import { visit } from 'unist-util-visit';
 
-const WIKI_RE = /\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]/g;
+const WIKI_RE = /!?\[\[([^\]|]+?)(?:\|([^\]]+?))?\]\]/g;
 
 export function toSlug(name) {
   return name
