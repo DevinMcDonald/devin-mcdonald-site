@@ -256,9 +256,11 @@ export function executeQuery(raw, vaultData) {
 // ── renderers ─────────────────────────────────────────────────────────────────
 
 function renderRow(row, exprStr) {
-  const url   = row.url;
-  const label = exprStr ? String(evalExpr(exprStr, row) ?? row.title) : row.title;
-  return url ? `<a href="${url}">${label}</a>` : label;
+  const url  = row.url;
+  const link = url ? `<a href="${url}">${row.title}</a>` : row.title;
+  if (!exprStr) return link;
+  const value = evalExpr(exprStr, row);
+  return value != null ? `${link}: ${value}` : link;
 }
 
 function renderList(rows, fieldExpr) {
