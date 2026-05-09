@@ -32,7 +32,10 @@ export function remarkWikiLinks(options = {}) {
 
         const raw     = match[1].trim();
         const hashIdx = raw.indexOf('#');
-        const noteName = hashIdx !== -1 ? raw.slice(0, hashIdx).trim() : raw;
+        // Strip vault-relative path and .md extension (Dataview output uses "Folder/Note.md" format)
+        const noteName = (hashIdx !== -1 ? raw.slice(0, hashIdx).trim() : raw)
+          .replace(/^.*\//, '')
+          .replace(/\.md$/, '');
         const fragment  = hashIdx !== -1 ? raw.slice(hashIdx + 1).trim() : null;
         const display   = match[2]?.trim() ?? raw;
         const baseUrl   = urlMap.get(noteName);
