@@ -53,12 +53,37 @@ function isMoc(data: Record<string, any>): boolean {
   return tags.some(t => typeof t === 'string' && t.toLowerCase() === 'moc');
 }
 
+async function readVaultFiles(
+  dir: string,
+  folder: string = '',
+  map: Map<string, FileEntry> = new Map(),
+  depth: number = 0,
+): Promise<Map<string, FileEntry>> {
+  const entries = await readdir(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.isDirectory() && !entry.name.startsWith('.') && depth === 0) {
+      await readVaultFiles(join(dir, entry.name), entry.name, map, depth + 1);
+    } else if (entry.name.endsWith('.md')) {
+      const title = entry.name.replace(/\.md$/, '');
+      const raw   = await readFile(join(dir, entry.name), 'utf-8');
+      try {
+        const { data, content } = matter(raw);
+        map.set(title, { title, data, content, folder });
+      } catch {
+        // skip files with malformed frontmatter
+      }
+    }
+  }
+  return map;
+}
+
 // ── tree types ────────────────────────────────────────────────────────────────
 
 interface FileEntry {
-  title: string;
-  data:  Record<string, any>;
+  title:   string;
+  data:    Record<string, any>;
   content: string;
+  folder:  string;
 }
 
 interface SiteNode {
@@ -153,23 +178,13 @@ function obsidianSiteLoader() {
   return {
     name: 'obsidian-site-loader',
     async load({ store, logger }: { store: any; logger: any }) {
-      // Read all markdown files from vault
-      let files: string[];
+      // Read all markdown files from vault (recursive)
+      let filesMap: Map<string, FileEntry>;
       try {
-        files = await readdir(VAULT_PATH);
-      } catch {
-        logger.warn(`Vault not found at ${VAULT_PATH} — site collection will be empty.`);
+        filesMap = await readVaultFiles(VAULT_PATH);
+      } catch (err) {
+        logger.warn(`Vault not found at ${VAULT_PATH} — site collection will be empty. Error: ${err}`);
         return;
-      }
-
-      // Build title → entry map
-      const filesMap = new Map<string, FileEntry>();
-      for (const file of files) {
-        if (!file.endsWith('.md')) continue;
-        const title = file.replace(/\.md$/, '');
-        const raw = await readFile(join(VAULT_PATH, file), 'utf-8');
-        const { data, content } = matter(raw);
-        filesMap.set(title, { title, data, content });
       }
 
       if (!filesMap.has(SITE_MOC_TITLE)) {
@@ -199,7 +214,7 @@ function obsidianSiteLoader() {
       const dvBlockRe = /```dataview\r?\n([\s\S]*?)```/g;
 
       const prelimVaultData = Array.from(filesMap.entries()).map(([t, e]) => ({
-        title: t, data: e.data, tags: normalizeTags(e.data.tags), url: urlMap.get(t) ?? null, folder: null,
+        title: t, data: e.data, tags: normalizeTags(e.data.tags), url: urlMap.get(t) ?? null, folder: e.folder,
       }));
 
       // title → MOC SiteNode that claims it via Dataview
@@ -248,7 +263,7 @@ function obsidianSiteLoader() {
         data:   entry.data,
         tags:   normalizeTags(entry.data.tags),
         url:    urlMap.get(title) ?? null,
-        folder: null,
+        folder: entry.folder,
       }));
 
       // Pass 2: render each node with full URL map and store
