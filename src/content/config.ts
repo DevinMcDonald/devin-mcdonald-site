@@ -12,6 +12,7 @@ import { remarkDataview, executeQuery } from '../plugins/remark-dataview.mjs';
 import { remarkYouTubeEmbeds }  from '../plugins/remark-youtube-embeds.mjs';
 import { remarkWikiLinks }      from '../plugins/remark-wiki-links.mjs';
 import { remarkFigletHeadings } from '../plugins/remark-figlet-headings.mjs';
+import rehypeSlug from 'rehype-slug';
 
 const VAULT_PATH = process.env.VAULT_PATH ?? '/Users/devinmcdonald/Obsidian Vault/personal';
 const SITE_MOC_TITLE = 'Site MOC';
@@ -32,7 +33,11 @@ function parseWikiLinks(content: string): string[] {
   const re = /\[\[([^\]|]+?)(?:\|[^\]]+?)?\]\]/g;
   const titles: string[] = [];
   let m: RegExpExecArray | null;
-  while ((m = re.exec(content)) !== null) titles.push(m[1].trim());
+  while ((m = re.exec(content)) !== null) {
+    const raw = m[1].trim();
+    const hashIdx = raw.indexOf('#');
+    titles.push(hashIdx !== -1 ? raw.slice(0, hashIdx).trim() : raw);
+  }
   return titles;
 }
 
@@ -138,6 +143,7 @@ function makeProcessor(urlMap: Map<string, string>, vaultData: any[]) {
     .use(remarkFigletHeadings)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
+    .use(rehypeSlug)
     .use(rehypeStringify);
 }
 

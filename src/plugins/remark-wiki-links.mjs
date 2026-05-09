@@ -30,9 +30,13 @@ export function remarkWikiLinks(options = {}) {
           parts.push({ type: 'text', value: node.value.slice(last, match.index) });
         }
 
-        const target  = match[1].trim();
-        const display = match[2]?.trim() ?? target;
-        const url     = urlMap.get(target);
+        const raw     = match[1].trim();
+        const hashIdx = raw.indexOf('#');
+        const noteName = hashIdx !== -1 ? raw.slice(0, hashIdx).trim() : raw;
+        const fragment  = hashIdx !== -1 ? raw.slice(hashIdx + 1).trim() : null;
+        const display   = match[2]?.trim() ?? raw;
+        const baseUrl   = urlMap.get(noteName);
+        const url       = baseUrl ? (fragment ? `${baseUrl}#${toSlug(fragment)}` : baseUrl) : null;
 
         parts.push(url
           ? { type: 'link', url, title: null, children: [{ type: 'text', value: display }] }
