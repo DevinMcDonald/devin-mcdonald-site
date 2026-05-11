@@ -1,0 +1,197 @@
+---
+// Full-page game. COOP/COEP headers are set in nginx for this route (required
+// for SharedArrayBuffer / pthreads used by the WASM build).
+// Does not use BaseLayout to avoid loading cross-origin Google Fonts, which
+// would violate COEP (require-corp).
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="cat-themed tower defense game" />
+    <title>catcat — devin-mcdonald.com</title>
+    <style>
+      :root {
+        --base:     #1e1e2e;
+        --text:     #cdd6f4;
+        --overlay0: #6c7086;
+        --overlay1: #7f849c;
+        --green:    #a6e3a1;
+        --mauve:    #cba6f7;
+      }
+
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        background: var(--base);
+        color: var(--text);
+        font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+        font-size: 14px;
+        overflow: hidden;
+      }
+
+      #root { width: 100%; height: 100vh; height: 100dvh; }
+
+      /* ── loading screen ─────────────────────────────────── */
+      #loading {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      #loading-prompt { color: var(--green); }
+
+      #loading-status {
+        color: var(--overlay0);
+        font-size: 0.8rem;
+        min-height: 1.2em;
+      }
+
+      .bar-wrap {
+        width: 30ch;
+        border: 1px solid var(--overlay1);
+        height: 1.1em;
+      }
+
+      #loading-bar {
+        height: 100%;
+        background: var(--green);
+        width: 0%;
+        transition: width 80ms linear;
+      }
+
+      #start-hint {
+        display: none;
+        color: var(--overlay0);
+        font-size: 0.8rem;
+        animation: blink 1s step-end infinite;
+      }
+
+      @keyframes blink { 50% { opacity: 0; } }
+
+      /* ── terminal host ──────────────────────────────────── */
+      #terminal-host { display: none; width: 100%; height: 100%; }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div id="loading">
+        <span id="loading-prompt">you@devin-mcdonald.com:~$ catcat</span>
+        <div class="bar-wrap"><div id="loading-bar"></div></div>
+        <span id="loading-status">fetching...</span>
+        <span id="start-hint">press any key to start</span>
+      </div>
+      <div id="terminal-host"></div>
+    </div>
+  </body>
+</html>
+
+<script>
+  import { Terminal } from '@xterm/xterm';
+  import { FitAddon } from '@xterm/addon-fit';
+  import '@xterm/xterm/css/xterm.css';
+
+  const loadingEl = document.getElementById('loading')!;
+  const statusEl  = document.getElementById('loading-status')!;
+  const barEl     = document.getElementById('loading-bar')!;
+  const hintEl    = document.getElementById('start-hint')!;
+  const hostEl    = document.getElementById('terminal-host')!;
+
+  // ── xterm.js — Catppuccin Mocha ──────────────────────────
+  const term = new Terminal({
+    theme: {
+      background:    '#1e1e2e', foreground:    '#cdd6f4',
+      cursor:        '#f5e0dc',
+      black:         '#45475a', red:           '#f38ba8',
+      green:         '#a6e3a1', yellow:        '#f9e2af',
+      blue:          '#89b4fa', magenta:       '#f5c2e7',
+      cyan:          '#94e2d5', white:         '#bac2de',
+      brightBlack:   '#585b70', brightRed:     '#f38ba8',
+      brightGreen:   '#a6e3a1', brightYellow:  '#f9e2af',
+      brightBlue:    '#89b4fa', brightMagenta: '#f5c2e7',
+      brightCyan:    '#94e2d5', brightWhite:   '#a6adc8',
+    },
+    fontFamily: '"JetBrains Mono", "Cascadia Code", "Fira Code", monospace',
+    fontSize: 14,
+    cursorBlink: true,
+    allowProposedApi: true,
+  });
+
+  const fitAddon = new FitAddon();
+  term.loadAddon(fitAddon);
+
+  // stdin buffer — filled from xterm.js key events
+  const inputBuffer: number[] = [];
+  term.onData(data => {
+    for (let i = 0; i < data.length; i++) inputBuffer.push(data.charCodeAt(i));
+  });
+
+  // ── load Emscripten module (no main() yet) ───────────────
+  const { default: CatcatModule } = await import(/* @vite-ignore */ '/wasm/catcat.js');
+
+  const catcat = await CatcatModule({
+    noInitialRun: true,
+
+    preRun: [function(this: any) {
+      this.FS.init(
+        () => inputBuffer.length ? inputBuffer.shift()! : null,
+        (c: number) => term.write(new Uint8Array([c])),
+        (c: number) => term.write(new Uint8Array([c])),
+      );
+    }],
+
+    setStatus(text: string) {
+      if (!text) {
+        barEl.style.width = '100%';
+        statusEl.textContent = 'ready.';
+        hintEl.style.display = 'block';
+        return;
+      }
+      statusEl.textContent = text;
+      const m = text.match(/\((\d+)\/(\d+)\)/);
+      if (m) barEl.style.width = `${Math.round(parseInt(m[1]) / parseInt(m[2]) * 100)}%`;
+    },
+  });
+
+  // ── wait for user gesture (unlocks Web Audio) ────────────
+  await new Promise<void>(resolve => {
+    const go = () => {
+      document.removeEventListener('keydown', go);
+      document.removeEventListener('click', go);
+      resolve();
+    };
+    document.addEventListener('keydown', go);
+    document.addEventListener('click', go);
+  });
+
+  // ── start game ───────────────────────────────────────────
+  loadingEl.style.display = 'none';
+  hostEl.style.display = 'block';
+  term.open(hostEl);
+  fitAddon.fit();
+  term.focus();
+
+  catcat.callMain([]);
+
+  // initial size
+  catcat.ccall('catcat_resize', null, ['number', 'number'], [term.cols, term.rows]);
+
+  // keep size in sync
+  const ro = new ResizeObserver(() => {
+    fitAddon.fit();
+    catcat.ccall('catcat_resize', null, ['number', 'number'], [term.cols, term.rows]);
+  });
+  ro.observe(hostEl);
+  window.addEventListener('resize', () => {
+    fitAddon.fit();
+    catcat.ccall('catcat_resize', null, ['number', 'number'], [term.cols, term.rows]);
+  });
+</script>

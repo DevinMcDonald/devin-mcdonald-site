@@ -238,6 +238,10 @@ const dateStr = new Date().toLocaleDateString('en-US', {
           `</div>`);
         break;
 
+      case 'catcat':
+        window.location.href = '/catcat';
+        return;
+
       case 'help':
         line(`<span class="yellow">available commands:</span>`);
         line(`  <span class="blue">ls</span>           list notes`);
@@ -246,6 +250,7 @@ const dateStr = new Date().toLocaleDateString('en-US', {
         line(`  <span class="blue">cd ..</span>         go back`);
         line(`  <span class="blue">cd ~</span>          go home`);
         line(`  <span class="blue">whoami</span>        about me`);
+        line(`  <span class="blue">catcat</span>        play cat cat tower defense`);
         line(`  <span class="blue">clear</span>         clear output`);
         line(`  <span class="blue">reset</span>         reload page`);
         break;

@@ -6,6 +6,14 @@ import { remarkStripDataview }  from './src/plugins/remark-strip-dataview.mjs';
 
 export default defineConfig({
   site: 'https://devin-mcdonald.com',
+  vite: {
+    build: {
+      rollupOptions: {
+        // catcat.js is a build artifact placed in public/wasm/ at deploy time
+        external: ['/wasm/catcat.js'],
+      },
+    },
+  },
   markdown: {
     remarkPlugins: [
       remarkStripDataview,

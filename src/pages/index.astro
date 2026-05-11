@@ -512,12 +512,17 @@ const dateStr = NOW.toLocaleDateString('en-US', { month: 'short', day: 'numeric'
         appendLine(buildWhoamiHtml());
         break;
 
+      case 'catcat':
+        window.location.href = '/catcat';
+        return;
+
       case 'help':
         appendLine('<span class="yellow">available commands:</span>');
         appendLine('  <span class="blue">ls</span>          list sections');
         appendLine('  <span class="blue">ls -al</span>      list with details');
         appendLine('  <span class="blue">cd &lt;name&gt;</span>   navigate to a section');
         appendLine('  <span class="blue">whoami</span>      about me');
+        appendLine('  <span class="blue">catcat</span>      play cat cat tower defense');
         appendLine('  <span class="blue">clear</span>       clear terminal, keep title');
         appendLine('  <span class="blue">reset</span>       replay boot animation');
         break;
