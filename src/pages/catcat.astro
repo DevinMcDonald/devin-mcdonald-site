@@ -140,6 +140,10 @@
   const catcat = await CatcatModule({
     noInitialRun: true,
 
+    // Emscripten resolves data/wasm URLs relative to the page, not the JS.
+    // Override so all assets are fetched from /wasm/ where they actually live.
+    locateFile: (path: string) => `/wasm/${path}`,
+
     preRun: [function(this: any) {
       this.FS.init(
         () => inputBuffer.length ? inputBuffer.shift()! : null,
