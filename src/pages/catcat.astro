@@ -144,13 +144,12 @@
     // Override so all assets are fetched from /wasm/ where they actually live.
     locateFile: (path: string) => `/wasm/${path}`,
 
-    preRun: [function(this: any) {
-      this.FS.init(
-        () => inputBuffer.length ? inputBuffer.shift()! : null,
-        (c: number) => term.write(new Uint8Array([c])),
-        (c: number) => term.write(new Uint8Array([c])),
-      );
-    }],
+    // Emscripten's generated preRun calls FS.init(Module.stdin, Module.stdout,
+    // Module.stderr) automatically — provide them here instead of calling
+    // FS.init manually (which would trigger a double-init assertion).
+    stdin:  () => inputBuffer.length ? inputBuffer.shift()! : null,
+    stdout: (c: number) => term.write(new Uint8Array([c])),
+    stderr: (c: number) => term.write(new Uint8Array([c])),
 
     setStatus(text: string) {
       if (!text) return;
