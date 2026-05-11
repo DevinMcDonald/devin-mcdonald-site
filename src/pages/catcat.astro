@@ -153,15 +153,16 @@
     }],
 
     setStatus(text: string) {
-      if (!text) {
-        barEl.style.width = '100%';
-        statusEl.textContent = 'ready.';
-        hintEl.style.display = 'block';
-        return;
-      }
+      if (!text) return;
       statusEl.textContent = text;
       const m = text.match(/\((\d+)\/(\d+)\)/);
       if (m) barEl.style.width = `${Math.round(parseInt(m[1]) / parseInt(m[2]) * 100)}%`;
+    },
+
+    onRuntimeInitialized() {
+      barEl.style.width = '100%';
+      statusEl.textContent = 'ready.';
+      hintEl.style.display = 'block';
     },
   });
 
