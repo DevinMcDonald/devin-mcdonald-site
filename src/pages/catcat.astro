@@ -128,10 +128,37 @@
   const fitAddon = new FitAddon();
   term.loadAddon(fitAddon);
 
+  // Block key-repeat events — TUI game only wants single keypresses, and repeat
+  // causes toggle-key flicker (e.g. the h help panel oscillates rapidly).
+  term.attachCustomKeyEventHandler((e: KeyboardEvent) => {
+    if (e.type === 'keydown' && e.repeat) return false;
+    return true;
+  });
+
   // stdin buffer — filled from xterm.js key events
   const inputBuffer: number[] = [];
+
+  // Track qqq to navigate back when the user quits the game.
+  let qCount = 0;
+  let qTimer: ReturnType<typeof setTimeout> | null = null;
+
   term.onData(data => {
-    for (let i = 0; i < data.length; i++) inputBuffer.push(data.charCodeAt(i));
+    for (let i = 0; i < data.length; i++) {
+      inputBuffer.push(data.charCodeAt(i));
+      if (data[i] === 'q') {
+        if (qTimer) clearTimeout(qTimer);
+        if (++qCount >= 3) {
+          qCount = 0;
+          qTimer = null;
+          setTimeout(() => history.back(), 100);
+        } else {
+          qTimer = setTimeout(() => { qCount = 0; qTimer = null; }, 600);
+        }
+      } else {
+        qCount = 0;
+        if (qTimer) { clearTimeout(qTimer); qTimer = null; }
+      }
+    }
   });
 
   // ── load Emscripten module (no main() yet) ───────────────
